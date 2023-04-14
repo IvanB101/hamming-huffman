@@ -1,27 +1,32 @@
+#include <math.h>
 #include <stdlib.h>
 
 #include "bitarr.h"
 
-void set_bit(void *arr, int posicion) {
-    char mask = 1 << (7 - posicion % 8);
-
-    ((char*)arr)[posicion / 8] |= mask;
+int min(int a, int b) {
+    return (a < b)? a : b;
 }
 
-void reset_bit(void *arr, int posicion) {
-    char mask = 1 << (7 - posicion % 8);
+void set_bit(void *arr, int position) {
+    char mask = 1 << (7 - position % 8);
+
+    ((char*)arr)[position / 8] |= mask;
+}
+
+void reset_bit(void *arr, int position) {
+    char mask = 1 << (7 - position % 8);
     mask = ~mask;
 
-    ((char*)arr)[posicion / 8] &= mask;
+    ((char*)arr)[position / 8] &= mask;
 }
 
-void flip_bit(void *arr, int posicion) {
-    char mask = 1 << (7 - posicion % 8);
+void flip_bit(void *arr, int position) {
+    char mask = 1 << (7 - position % 8);
 
-    if(((char*)arr)[posicion / 8] &= mask) {
-        reset_bit(arr, posicion);
+    if(((char*)arr)[position / 8] &= mask) {
+        reset_bit(arr, position);
     } else {
-        set_bit(arr, posicion);
+        set_bit(arr, position);
     }
 }
 
@@ -61,6 +66,30 @@ void bit_not(void* arr1, int size) {
     }
 }
 
+void move(void* from, void* to, int start_from, int start_to, int size) {
+    int passed = 0, current_from = start_from, current_to = start_to;
+
+    while(passed < size) {
+        int to_move = min(min(current_from % 32, current_to % 32), size - passed);
+
+        int mask = (1 << to_move) - 1;
+        
+        int int_from = ((int*)from)[current_from / 32];
+        int temp = int_from & (mask << (current_from - to_move));
+
+        mask <<= current_to - to_move;
+        temp <<= current_to - to_move;
+        
+        int int_to = ((int*)to)[current_to / 32];
+        int_to &= ~mask;
+        int_to |= temp;
+
+        passed += to_move;
+        current_from += to_move;
+        current_to += to_move;
+    }
+}
+
 char* to_bit_string(void* arr, int size) {
     char* ret = (char*)malloc(size * 9 + 1);
 
@@ -79,3 +108,4 @@ char* to_bit_string(void* arr, int size) {
 
     return ret;
 }
+
