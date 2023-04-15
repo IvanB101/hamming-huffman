@@ -32,11 +32,9 @@ void flip_bit(void *arr, int position) {
 
 void bit_and(void* arr1, void* arr2, int size1) {
     int i;
-    // Los and se realizan de a palabras del procesador
     for(i = 0; i < size1 / sizeof(int); i++) {
         ((int*) arr1)[i] &= ((int*) arr2)[i];
     }
-    // Se realiza la parte que no es multiplo del tamanio de int
     for(i = i * sizeof(int); i < size1; i++) {
         ((char*) arr1)[i] &= ((char*) arr2)[i];
     }
@@ -44,11 +42,9 @@ void bit_and(void* arr1, void* arr2, int size1) {
 
 void bit_or(void* arr1, void* arr2, int size1) {
     int i;
-    // Los and se realizan de a palabras del procesador
     for(i = 0; i < size1 / sizeof(int); i++) {
         ((int*) arr1)[i] |= ((int*) arr2)[i];
     }
-    // Se realiza la parte que no es multiplo del tamanio de int
     for(i = i * sizeof(int); i < size1; i++) {
         ((char*) arr1)[i] |= ((char*) arr2)[i];
     }
@@ -56,11 +52,9 @@ void bit_or(void* arr1, void* arr2, int size1) {
 
 void bit_not(void* arr1, int size) {
     int i;
-    // Los and se realizan de a palabras del procesador
     for(i = 0; i < size / sizeof(int); i++) {
         ((int*) arr1)[i] = ~((int*) arr1)[i];
     }
-    // Se realiza la parte que no es multiplo del tamanio de int
     for(i = i * sizeof(int); i < size; i++) {
         ((char*) arr1)[i] = ~((char*) arr1)[i];
     }
@@ -70,19 +64,26 @@ void move(void* from, void* to, int start_from, int start_to, int size) {
     int passed = 0, current_from = start_from, current_to = start_to;
 
     while(passed < size) {
-        int to_move = min(min(current_from % 32, current_to % 32), size - passed);
+        int dist_from = 8 - (current_from % 8);
+        int dist_to = 8 - (current_to % 8);
+        int to_move = min(min(dist_from, dist_to), size - passed);
 
-        int mask = (1 << to_move) - 1;
+        unsigned char mask = ((int)1 << to_move) - 1;
         
-        int int_from = ((int*)from)[current_from / 32];
-        int temp = int_from & (mask << (current_from - to_move));
+        unsigned char char_from = ((unsigned char*)from)[current_from / 8];
+        unsigned char temp = char_from & (mask << (dist_from - to_move));
 
-        mask <<= current_to - to_move;
-        temp <<= current_to - to_move;
+        mask <<= dist_to - to_move;
+        int diference = dist_from - dist_to;
+        if(diference < 0) {
+            temp <<= -diference;
+        } else {
+            temp >>= diference;
+        }
         
-        int int_to = ((int*)to)[current_to / 32];
-        int_to &= ~mask;
-        int_to |= temp;
+        unsigned char *char_to = &((unsigned char*)to)[current_to / 8];
+        *char_to &= ~mask;
+        *char_to |= temp;
 
         passed += to_move;
         current_from += to_move;
