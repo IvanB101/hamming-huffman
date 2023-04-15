@@ -12,7 +12,7 @@ int main() {
     printf("Arr1: %s\n", to_bit_string((void*)arr1, sizeof(arr1)));
     printf("Arr2: %s\n", to_bit_string((void*)arr2, sizeof(arr2)));
 
-    move((void*)arr1, (void*)arr2, 32, 7, 16);
+    move((void*)arr1, (void*)arr2, 32, 17, 16);
     printf("Res:  %s\n", to_bit_string((void*)arr2, sizeof(arr2)));
 
     return 0;
