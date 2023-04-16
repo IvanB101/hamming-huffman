@@ -91,6 +91,41 @@ void move(void* from, void* to, int start_from, int start_to, int size) {
     }
 }
 
+short parity(void* arr, unsigned int size) {
+    unsigned int i; 
+    unsigned char temp = ((unsigned char*) arr)[0], res = 0;
+
+    for(i = 1; i < size; i++) {
+        temp ^= ((unsigned char*) arr)[i];
+    }
+    
+    for(i = 0; i < sizeof(unsigned char); i++) {
+        res ^= temp & 1;
+
+        temp >>= 1;
+    }
+
+    return res;
+}
+
+short masked_parity(void* arr, void* mask, unsigned int size) {
+    unsigned int i; 
+    unsigned char temp = ((unsigned char*) arr)[0] & ((unsigned char*) mask)[0],
+        res = 0;
+
+    for(i = 1; i < size; i++) {
+        temp ^= ((unsigned char*) arr)[i] & ((unsigned char*) mask)[i];
+    }
+    
+    for(i = 0; i < sizeof(unsigned char); i++) {
+        res ^= temp & 1;
+
+        temp >>= 1;
+    }
+
+    return res;
+}
+
 char* to_bit_string(void* arr, int size) {
     char* ret = (char*)malloc(size * 9 + 1);
 

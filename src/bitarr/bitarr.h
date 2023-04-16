@@ -79,6 +79,21 @@ void bit_not(void* arr, int size);
 void move(void* from, void* to, int start_from, int start_to, int size);
 
 /**
+ * Returns the sum modulo 2 of the bits in arr
+ * @param arr pointer to structure, seen as an array of bytes
+ * @param size of arr in bytes
+*/
+short parity(void* arr, unsigned int size);
+
+/**
+ * Returns the sum modulo 2 of the bits in arr after doing a logic and with mask
+ * @param arr pointer to structure, seen as an array of bytes
+ * @param mask to be used with arr
+ * @param size of arr in bytes
+*/
+short masked_parity(void* arr, void* mask, unsigned int size);
+
+/**
  * Return a string with representing size bits, starting at the address pointed
  * by arr
  * @param arr pointer to data
