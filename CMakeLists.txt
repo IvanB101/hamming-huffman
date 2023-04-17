@@ -8,7 +8,6 @@ set(CMAKE_CXX_STANDARD 14)
 
 set(CMAKE_BUILD_TYPE Debug)
 
-add_subdirectory(src/bitvec)
 add_subdirectory(src/coding)
 add_subdirectory(src/noise)
 add_subdirectory(src/bitarr)
@@ -16,7 +15,6 @@ add_subdirectory(src/bitarr)
 add_executable(${This} src/main.c)
 
 target_link_libraries(${This}
-    bitvec
     bitarr
     coding
     noise)
