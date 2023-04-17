@@ -6,6 +6,8 @@ project(${This} C CXX)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_STANDARD 14)
 
+set(CMAKE_BUILD_TYPE Debug)
+
 add_subdirectory(src/bitvec)
 add_subdirectory(src/coding)
 add_subdirectory(src/noise)

@@ -3,33 +3,51 @@
 #include "../bitarr/bitarr.h"
 #include "./masks.c"
 #include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <string.h>
+
+#include <unistd.h>
 
 int make_space(void* buff_old, void* buff_new, void* block, int block_size, int rem_old);
 void protect(void* block, int block_size, unsigned int exponent);
 
 void test() {
-    char buff_new[] = {0xee, 0xf1, 0, 0};
-    char buff_old[] = {0, 0, 0, 0};
-    char block[] = {0xff, 0xff, 0, 0};
-
-    init_masks();
-
-    printf("Buff_new: %s\n", to_bit_string((void*)buff_new, sizeof(buff_new)));
-
-    int i;
-    for(i = 0; i < 5; i++) {
-        short p = masked_parity((void*)buff_new, (void*)masks[i], sizeof(buff_new));
-        printf("Mask %d: %s", i, to_bit_string((void*)masks[i], sizeof(buff_new)));
-        printf("Parity %d: %d\n", i, p);
+    FILE *fd, *res;
+    
+    char buff[200];
+    if(!getcwd(buff, sizeof(buff))) {
+        perror(strerror(errno));
+        return;
     }
 
-    protect((void*)buff_new, sizeof(buff_new), 5);
-    printf("Protected: %s\n", to_bit_string((void*)buff_new, sizeof(buff_new)));
+    printf("CWD: %s\n", buff);
+    if(!(fd = fopen("/home/ivan/repositories/teoria-de-la-informacion/hamming/Prueba.txt", "rb"))) {
+        printf("Error al abrir el archivo de lectura\n");
+        perror(strerror(errno));
+        return;
+    }
+    if(!(res = fopen("/home/ivan/repositories/teoria-de-la-informacion/hamming/Prueba.HA1", "rb"))) {
+        printf("Error al abrir el archivo de escritura\n");
+        perror(strerror(errno));
+        return;
+    }
+
+    encode(fd, res, 32, 5);
 }
 
-int encode(FILE fd, unsigned int block_size, unsigned int exponent) {
+int encode(FILE *fd, FILE *res, unsigned int block_size, unsigned int exponent) {
     if(!inicialized) {
         init_masks();
+    }
+
+    void* buffer = malloc(block_size);
+
+    unsigned int read, total = 0;
+    while((read = fread(buffer, 1, block_size, fd)) > 0) {
+        total += read;
+
+        fwrite(buffer, 1, block_size, fd);
     }
 
     return -1;
@@ -43,6 +61,7 @@ int encode(FILE fd, unsigned int block_size, unsigned int exponent) {
 */
 void protect(void* block, int block_size, unsigned int exponent) {
     int i, j = 1;
+    // Control bits for hamming
     for(i = 0; i < exponent; i++) {
         if(masked_parity(block, (void*)masks[i], block_size)) {
             flip_bit(block, j - 1);
@@ -51,6 +70,7 @@ void protect(void* block, int block_size, unsigned int exponent) {
         j <<= 1;
     }
 
+    // Parity check for entire block
     if(parity(block, block_size)) {
         flip_bit(block, j - 1);
     }

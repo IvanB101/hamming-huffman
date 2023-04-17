@@ -1,4 +1,5 @@
 #include <math.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "bitarr.h"
@@ -23,7 +24,7 @@ void reset_bit(void *arr, int position) {
 void flip_bit(void *arr, int position) {
     char mask = 1 << (7 - position % 8);
 
-    if(((char*)arr)[position / 8] &= mask) {
+    if(((char*)arr)[position / 8] & mask) {
         reset_bit(arr, position);
     } else {
         set_bit(arr, position);
@@ -99,7 +100,7 @@ short parity(void* arr, unsigned int size) {
         temp ^= ((unsigned char*) arr)[i];
     }
     
-    for(i = 0; i < sizeof(unsigned char); i++) {
+    for(i = 0; i < 8; i++) {
         res ^= temp & 1;
 
         temp >>= 1;
@@ -117,7 +118,7 @@ short masked_parity(void* arr, void* mask, unsigned int size) {
         temp ^= ((unsigned char*) arr)[i] & ((unsigned char*) mask)[i];
     }
     
-    for(i = 0; i < sizeof(unsigned char); i++) {
+    for(i = 0; i < 8; i++) {
         res ^= temp & 1;
 
         temp >>= 1;
