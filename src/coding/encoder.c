@@ -6,51 +6,61 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
+#include <math.h>
 
-#include <unistd.h>
+#define BUFFER_SIZE 65536
 
 int make_space(void* buff_old, void* buff_new, void* block, int block_size, int rem_old);
 void protect(void* block, int block_size, unsigned int exponent);
-
-void test() {
-    FILE *fd, *res;
-    
-    char buff[200];
-    if(!getcwd(buff, sizeof(buff))) {
-        perror(strerror(errno));
-        return;
-    }
-
-    printf("CWD: %s\n", buff);
-    if(!(fd = fopen("/home/ivan/repositories/teoria-de-la-informacion/hamming/Prueba.txt", "rb"))) {
-        printf("Error al abrir el archivo de lectura\n");
-        perror(strerror(errno));
-        return;
-    }
-    if(!(res = fopen("/home/ivan/repositories/teoria-de-la-informacion/hamming/Prueba.HA1", "rb"))) {
-        printf("Error al abrir el archivo de escritura\n");
-        perror(strerror(errno));
-        return;
-    }
-
-    encode(fd, res, 32, 5);
-}
 
 int encode(FILE *fd, FILE *res, unsigned int block_size, unsigned int exponent) {
     if(!inicialized) {
         init_masks();
     }
+    unsigned int file_size, n_blocks, info_bits;
 
-    void* buffer = malloc(block_size);
 
-    unsigned int read, total = 0;
-    while((read = fread(buffer, 1, block_size, fd)) > 0) {
-        total += read;
+    fseek(fd, 0L, SEEK_END);
+    file_size = ftell(fd);
 
-        fwrite(buffer, 1, block_size, fd);
+    rewind(fd);
+
+    info_bits = block_size - exponent - 1;
+    n_blocks = ceil(file_size * 8.0 / info_bits);
+
+    void *buffer = malloc(file_size),
+         *result = malloc((n_blocks + 1) * block_size / 8);
+
+    unsigned int buff_index = 0,
+                 res_index = 0,
+                 remaining = block_size;
+
+    fread(buffer, 1, file_size, fd);
+
+    while(res_index < n_blocks + 1) {
+        remaining = make_space(
+                (void*)(buffer + buff_index),
+                (void*)(buffer + buff_index + 1),
+                (void*)(result + res_index),
+                block_size,
+                remaining);
+
+        protect((void*)(result + res_index), block_size, exponent);
+
+        if (remaining < 0) {
+            remaining = -remaining;
+        } else {
+            buff_index++;
+        }
+
+        res_index++;
     }
 
-    return -1;
+    fwrite((void*)&n_blocks, 4, 1, res);
+
+    fwrite(result, 1, n_blocks * block_size / 8, res);
+
+    return 0;
 }
 
 /**
@@ -58,7 +68,7 @@ int encode(FILE *fd, FILE *res, unsigned int block_size, unsigned int exponent) 
  * @param block pointer to the block to be protected
  * @param block_size size of the block to be protected, in bytes
  * @param exponent to which to elevate 2 to obtain block_size
-*/
+ */
 void protect(void* block, int block_size, unsigned int exponent) {
     int i, j = 1;
     // Control bits for hamming
@@ -66,7 +76,7 @@ void protect(void* block, int block_size, unsigned int exponent) {
         if(masked_parity(block, (void*)masks[i], block_size)) {
             flip_bit(block, j - 1);
         }
-        
+
         j <<= 1;
     }
 
