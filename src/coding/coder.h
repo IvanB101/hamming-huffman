@@ -18,7 +18,7 @@
 */
 int encode(FILE *fd, FILE *res, unsigned int block_size, unsigned int exponent);
 
-int decode(FILE fd, int block_size, int correct);
+int decode(FILE *fd, FILE *res, int block_size, int correct, unsigned int exponent);
 
 void test(FILE *fd, FILE *res);
 
