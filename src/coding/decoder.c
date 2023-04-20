@@ -1,18 +1,17 @@
 #include "coder.h"
 
 #include "../bitarr/bitarr.h"
-#include "./masks.c"
 #include <stdio.h>
 #include <stdlib.h>
 
-void correct(void* block, int block_size, unsigned int exponent);
+void correct(void* block, int block_size, unsigned int exponent, void *masks);
 
-int decode(FILE *fd, FILE *res, int block_size, int correction, unsigned int exponent) {
-    if(!inicialized) {
-        init_masks();
-    }
+int unpack(void* buffer, void* block, int block_size, int counter);
 
-    unsigned int buff_index, block_size_bytes = block_size / 8;
+int decode(FILE *fd, FILE *res, int block_size, unsigned int exponent, int correction) {
+    void *masks = init_masks();
+
+    unsigned int  block_size_bytes = block_size / 8;
     unsigned long file_size, n_blocks;
     int counter = 0;
     
@@ -23,31 +22,28 @@ int decode(FILE *fd, FILE *res, int block_size, int correction, unsigned int exp
     void *buffer = malloc(n_blocks * block_size_bytes),
          *result = malloc(file_size + block_size_bytes);
 
-    fread(buffer, 1, file_size, fd);
+    fread(buffer, 1, n_blocks * block_size_bytes, fd);
 
-    for(int i = 0, buff_index = 0; i < n_blocks; i++) {
-        correct((void*)(buffer + buff_index * block_size_bytes), block_size, exponent);
+    for(int i = 0; i < n_blocks; i++) {
+        // correct((void*)(buffer + i * block_size_bytes), block_size, exponent, masks);
 
-        counter += unpack((void*)(buffer + buff_index * block_size_bytes), 
+        counter = unpack((void*)(buffer + i * block_size_bytes), 
                         (void*)(result),
-                        block_size);
-
-
-        buff_index++;
-        
+                        block_size,
+                        counter);
     }
 
     fwrite(result, 1, counter, res);
     
-    return -1;
+    return 0;
 }
 
-void correct(void* block, int block_size, unsigned int exponent) {
+void correct(void* block, int block_size, unsigned int exponent, void *masks) {
     int sindrome, i;
 
     // calculates the block syndrome
     for(i = 0; i < exponent; i++) {
-        sindrome |= masked_parity(block, (void*)masks[i], block_size) << i;
+        sindrome |= masked_parity(block, (void*)(masks + i * MAX_BLOCK_SIZE), block_size) << i;
     }
 
     // Checks if the parity of the blocks needs correction
@@ -56,22 +52,21 @@ void correct(void* block, int block_size, unsigned int exponent) {
             flip_bit(block, sindrome);
         } 
     }
-
 }
 
 
-int unpack(void* buffer, void* block, int block_size) {
-    int remaining = block_size - 2, start_from = 0, start_to = 2, size = 1;
+int unpack(void* buffer, void* block, int block_size, int counter) {
+    int remaining = block_size - 2, start_from = 2, start_to = counter, size = 1;
 
     while(remaining > 0) {
         move((void*)buffer, (void*)block, start_from, start_to, size);
 
         remaining -= size + 1;
-        start_to += size + 1;
-        start_from += size;
+        start_from += size + 1;
+        start_to += size;
 
         size = (size << 1) + 1;
     }
 
-    return start_from;
+    return start_to;
 }

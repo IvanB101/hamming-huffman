@@ -8,19 +8,16 @@
 #include <errno.h>
 #include <string.h>
 
-#define BUFFER_SIZE 65536
-
 int make_space(void* buff_old, void* buff_new, void* block, int block_size, int rem_old);
-void protect(void* block, int block_size, unsigned int exponent);
+void protect(void* block, int block_size_bytes, unsigned int exponent, void *masks);
 
 void test(FILE *fd, FILE *res) {
     encode(fd, res, 32, 5);
 }
 
 int encode(FILE *fd, FILE *res, unsigned int block_size, unsigned int exponent) {
-    if(!inicialized) {
-        init_masks();
-    }
+    void *masks = init_masks();
+
     unsigned int info_bits, buff_index, remaining, block_size_bytes = block_size / 8;
     unsigned long file_size, n_blocks, res_size;
 
@@ -47,7 +44,7 @@ int encode(FILE *fd, FILE *res, unsigned int block_size, unsigned int exponent) 
                 block_size,
                 remaining);
 
-        protect((void*)(result + i * block_size_bytes), block_size_bytes, exponent);
+        protect((void*)(result + i * block_size_bytes), block_size_bytes, exponent, masks);
 
         if (remaining < 0) {
             remaining = -remaining;
@@ -73,11 +70,11 @@ int encode(FILE *fd, FILE *res, unsigned int block_size, unsigned int exponent) 
  * @param block_size size of the block to be protected, in bytes
  * @param exponent to which to elevate 2 to obtain block_size
  */
-void protect(void* block, int block_size_bytes, unsigned int exponent) {
+void protect(void* block, int block_size_bytes, unsigned int exponent, void *masks) {
     int i, j = 1;
     // Control bits for hamming
     for(i = 0; i < exponent; i++) {
-        if(masked_parity(block, (void*)masks[i], block_size_bytes)) {
+        if(masked_parity(block, (void*)(masks + i * MAX_BLOCK_SIZE), block_size_bytes)) {
             flip_bit(block, j - 1);
         }
 

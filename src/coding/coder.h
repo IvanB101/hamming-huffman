@@ -18,8 +18,8 @@
 */
 int encode(FILE *fd, FILE *res, unsigned int block_size, unsigned int exponent);
 
-int decode(FILE *fd, FILE *res, int block_size, int correct, unsigned int exponent);
+int decode(FILE *fd, FILE *res, int block_size, unsigned int exponent, int correct);
 
-void test(FILE *fd, FILE *res);
+void* init_masks();
 
 #endif 

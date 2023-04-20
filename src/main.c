@@ -11,10 +11,11 @@
 #include "bitarr/bitarr.h"
 
 int main() {
-    FILE *fd, *res;
+    FILE *fd, *res, *pepe;
 
     char read_file[] = "/home/ivan/repositories/teoria-de-la-informacion/hamming/Prueba.txt";
     char write_file[] = "/home/ivan/repositories/teoria-de-la-informacion/hamming/Prueba.HA1";
+    char result[] = "/home/ivan/repositories/teoria-de-la-informacion/hamming/Pepe.txt";
 
     if(!(fd = fopen(read_file, "rb"))) {
         printf("Error abriendo %s\n", read_file);
@@ -26,8 +27,14 @@ int main() {
         perror(strerror(errno));
         return -1;
     }
+    if(!(pepe = fopen(result, "wb+"))) {
+        printf("Error abriendo %s\n", result);
+        perror(strerror(errno));
+        return -1;
+    }
 
-    test(fd, res);
+    encode(fd, res, 32, 5);
+    decode(res, pepe, 32, 5, 1);
 
     return 0;
 }
