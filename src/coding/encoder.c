@@ -13,6 +13,22 @@
 int make_space(void* buff_old, void* buff_new, void* block, int block_size, int rem_old);
 void protect(void* block, int block_size, unsigned int exponent);
 
+void test(FILE *fd, FILE *res) {
+    void* buffer = malloc(sizeof(int));
+    fseek(fd, 0, SEEK_END);
+
+    *(int*)buffer = (int)ftell(fd);
+    fwrite(buffer, 4, 1, res);
+
+    printf("Read size: %d\n", *(int*)buffer);
+    
+    *(int*)buffer = 0;
+    printf("Buffer: %d\n", *(int*)buffer);
+
+    fread(buffer, 4, 1, res);
+    printf("Written size: %d\n", *(int*)buffer);
+}
+
 int encode(FILE *fd, FILE *res, unsigned int block_size, unsigned int exponent) {
     if(!inicialized) {
         init_masks();
@@ -59,6 +75,9 @@ int encode(FILE *fd, FILE *res, unsigned int block_size, unsigned int exponent) 
     fwrite((void*)&n_blocks, 4, 1, res);
 
     fwrite(result, 1, n_blocks * block_size / 8, res);
+
+    free(buffer);
+    free(result);
 
     return 0;
 }

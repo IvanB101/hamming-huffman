@@ -20,6 +20,6 @@ int encode(FILE *fd, FILE *res, unsigned int block_size, unsigned int exponent);
 
 int decode(FILE fd, int block_size, int correct);
 
-void test();
+void test(FILE *fd, FILE *res);
 
 #endif 
