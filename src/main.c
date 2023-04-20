@@ -13,16 +13,18 @@
 int main() {
     FILE *fd, *res;
 
-    char read_file[] = "Prueba.txt";
-    char write_file[] = "Prueba.HA1";
+    char read_file[] = "/home/ivan/repositories/teoria-de-la-informacion/hamming/Prueba.txt";
+    char write_file[] = "/home/ivan/repositories/teoria-de-la-informacion/hamming/Prueba.HA1";
 
     if(!(fd = fopen(read_file, "rb"))) {
         printf("Error abriendo %s\n", read_file);
         perror(strerror(errno));
+        return -1;
     }
-    if(!(fd = fopen(write_file, "wb+"))) {
+    if(!(res = fopen(write_file, "wb+"))) {
         printf("Error abriendo %s\n", write_file);
         perror(strerror(errno));
+        return -1;
     }
 
     test(fd, res);
