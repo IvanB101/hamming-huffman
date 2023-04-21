@@ -40,17 +40,19 @@ int decode(FILE *fd, FILE *res, int block_size, unsigned int exponent, int corre
 }
 
 void correct(void* block, int block_size_bytes, unsigned int exponent, void *masks) {
-    int sindrome, i;
+    unsigned int sindrome = 0, i;
 
     // calculates the block syndrome
     for(i = 0; i < exponent; i++) {
-        sindrome |= masked_parity(block, (void*)(masks + i * MAX_BLOCK_SIZE), block_size_bytes) << i;
+        sindrome |= (masked_parity(block, (void*)(masks + i * MAX_BLOCK_SIZE), block_size_bytes) << i);
     }
+
+    printf("Sindrome: %s\n", to_bit_string((void*)&sindrome, 1) );
 
     // Checks if the parity of the blocks needs correction
     if(parity(block, block_size_bytes)) {
         if(sindrome != 0){
-            flip_bit(block, sindrome);
+            flip_bit(block, sindrome-1);
         } 
     }
 }
@@ -83,7 +85,7 @@ int introduce_error(FILE *fd, FILE *res, int block_size, unsigned int exponent){
 
     fread(buffer, 1, n_blocks * block_size_bytes, fd);
 
-    srand(0);
+    srand(546514843103518461);
 
     int module_error = rand() % exponent;
     int position_error = rand() % block_size;
