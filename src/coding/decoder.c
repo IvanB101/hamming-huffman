@@ -26,7 +26,7 @@ int decode(FILE *fd, FILE *res, int block_size, unsigned int exponent, int corre
     for(int i = 0; i < n_blocks; i++) {
         void *block = (void*)(buffer + i * block_size_bytes);
 
-        correct(block, block_size, exponent, masks);
+        correct(block, block_size_bytes, exponent, masks);
 
         buff_offset = unpack(block, 
                         result,
@@ -39,16 +39,16 @@ int decode(FILE *fd, FILE *res, int block_size, unsigned int exponent, int corre
     return 0;
 }
 
-void correct(void* block, int block_size, unsigned int exponent, void *masks) {
+void correct(void* block, int block_size_bytes, unsigned int exponent, void *masks) {
     int sindrome, i;
 
     // calculates the block syndrome
     for(i = 0; i < exponent; i++) {
-        sindrome |= masked_parity(block, (void*)(masks + i * MAX_BLOCK_SIZE), block_size) << i;
+        sindrome |= masked_parity(block, (void*)(masks + i * MAX_BLOCK_SIZE), block_size_bytes) << i;
     }
 
     // Checks if the parity of the blocks needs correction
-    if(parity(block, block_size)) {
+    if(parity(block, block_size_bytes)) {
         if(sindrome != 0){
             flip_bit(block, sindrome);
         } 
