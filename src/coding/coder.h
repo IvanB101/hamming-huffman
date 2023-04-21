@@ -20,6 +20,8 @@ int encode(FILE *fd, FILE *res, unsigned int block_size, unsigned int exponent);
 
 int decode(FILE *fd, FILE *res, int block_size, unsigned int exponent, int correct);
 
+int introduce_error(FILE *fd, FILE *res, int block_size, unsigned int exponent);
+
 void* init_masks();
 
 #endif 

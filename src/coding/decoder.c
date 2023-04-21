@@ -26,7 +26,7 @@ int decode(FILE *fd, FILE *res, int block_size, unsigned int exponent, int corre
     for(int i = 0; i < n_blocks; i++) {
         void *block = (void*)(buffer + i * block_size_bytes);
 
-        // correct(block, block_size, exponent, masks);
+        correct(block, block_size, exponent, masks);
 
         buff_offset = unpack(block, 
                         result,
@@ -70,4 +70,31 @@ int unpack(void* buffer, void* result, int block_size, int buff_offset) {
     }
 
     return start_to;
+}
+
+int introduce_error(FILE *fd, FILE *res, int block_size, unsigned int exponent){
+    unsigned int  block_size_bytes = block_size / 8;
+    unsigned long file_size, n_blocks;
+    
+    fread((void*)&n_blocks, sizeof(long), 1, fd);
+    fread((void*)&file_size, sizeof(long), 1, fd);
+
+    void *buffer = malloc(n_blocks * block_size_bytes);
+
+    fread(buffer, 1, n_blocks * block_size_bytes, fd);
+
+    srand(0);
+
+    int module_error = rand() % exponent;
+    int position_error = rand() % block_size;
+
+    flip_bit((void*)(buffer + module_error), position_error);
+
+    fwrite((void*)&n_blocks, sizeof(long), 1, res);
+    fwrite((void*)&file_size, sizeof(long), 1, res);
+
+    fwrite(buffer, 1, n_blocks * block_size_bytes, res);
+    
+    free(buffer);
+    return 0;
 }
