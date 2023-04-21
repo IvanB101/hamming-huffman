@@ -13,9 +13,9 @@
 int main() {
     FILE *fd, *res, *pepe;
 
-    char read_file[] = "/home/ivan/repositories/teoria-de-la-informacion/hamming/Prueba.txt";
-    char write_file[] = "/home/ivan/repositories/teoria-de-la-informacion/hamming/Prueba.HA1";
-    char result[] = "/home/ivan/repositories/teoria-de-la-informacion/hamming/Pepe.txt";
+    char read_file[] = "/home/ivan/repositories/teoria-de-la-informacion/hamming/Primero.txt";
+    char write_file[] = "/home/ivan/repositories/teoria-de-la-informacion/hamming/Intermedio.HA1";
+    char result[] = "/home/ivan/repositories/teoria-de-la-informacion/hamming/Final.txt";
 
     if(!(fd = fopen(read_file, "rb"))) {
         printf("Error abriendo %s\n", read_file);
@@ -27,13 +27,18 @@ int main() {
         perror(strerror(errno));
         return -1;
     }
-    if(!(pepe = fopen(result, "wb+"))) {
+    if(!(pepe = fopen(result, "wb"))) {
         printf("Error abriendo %s\n", result);
         perror(strerror(errno));
         return -1;
     }
 
     encode(fd, res, 32, 5);
+
+    rewind(fd);
+    rewind(res);
+    rewind(pepe);
+
     decode(res, pepe, 32, 5, 1);
 
     return 0;

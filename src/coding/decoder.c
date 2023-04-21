@@ -6,17 +6,16 @@
 
 void correct(void* block, int block_size, unsigned int exponent, void *masks);
 
-int unpack(void* buffer, void* block, int block_size, int counter);
+int unpack(void* buffer, void* block, int block_size, int buff_offset);
 
 int decode(FILE *fd, FILE *res, int block_size, unsigned int exponent, int correction) {
     void *masks = init_masks();
 
     unsigned int  block_size_bytes = block_size / 8;
     unsigned long file_size, n_blocks;
-    int counter = 0;
+    int buff_offset = 0;
     
     fread((void*)&n_blocks, sizeof(long), 1, fd);
-    
     fread((void*)&file_size, sizeof(long), 1, fd);
 
     void *buffer = malloc(n_blocks * block_size_bytes),
@@ -25,15 +24,17 @@ int decode(FILE *fd, FILE *res, int block_size, unsigned int exponent, int corre
     fread(buffer, 1, n_blocks * block_size_bytes, fd);
 
     for(int i = 0; i < n_blocks; i++) {
-        // correct((void*)(buffer + i * block_size_bytes), block_size, exponent, masks);
+        void *block = (void*)(buffer + i * block_size_bytes);
 
-        counter = unpack((void*)(buffer + i * block_size_bytes), 
-                        (void*)(result),
+        // correct(block, block_size, exponent, masks);
+
+        buff_offset = unpack(block, 
+                        result,
                         block_size,
-                        counter);
+                        buff_offset);
     }
 
-    fwrite(result, 1, counter, res);
+    fwrite(result, 1, file_size, res);
     
     return 0;
 }
@@ -55,11 +56,11 @@ void correct(void* block, int block_size, unsigned int exponent, void *masks) {
 }
 
 
-int unpack(void* buffer, void* block, int block_size, int counter) {
-    int remaining = block_size - 2, start_from = 2, start_to = counter, size = 1;
+int unpack(void* buffer, void* result, int block_size, int buff_offset) {
+    int remaining = block_size - 2, start_from = 2, start_to = buff_offset, size = 1;
 
     while(remaining > 0) {
-        move((void*)buffer, (void*)block, start_from, start_to, size);
+        move(buffer, result, start_from, start_to, size);
 
         remaining -= size + 1;
         start_from += size + 1;
