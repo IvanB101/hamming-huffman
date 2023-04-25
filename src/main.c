@@ -13,10 +13,10 @@
 int main() {
     FILE *fd, *res, *pepe, *error;
 
-    char read_file[] = "/home/luciana/hamming/Primero.txt";
-    char write_file[] = "/home/luciana/hamming/Intermedio.HA1";
-    char error_file[] = "/home/luciana/hamming/ConError.HE1";
-    char result[] = "/home/luciana/hamming/Final.txt";
+    char read_file[] = "../Primero.txt";
+    char write_file[] = "../Intermedio.HA1";
+    char error_file[] = "../ConError.HE1";
+    char result[] = "../Final.txt";
 
     if(!(fd = fopen(read_file, "rb"))) {
         printf("Error abriendo %s\n", read_file);
@@ -46,7 +46,7 @@ int main() {
     rewind(pepe);
     rewind(error);
 
-    introduce_error(res, error, 32, 5);
+    corrupt(res, error, 32, 5);
     
     rewind(fd);
     rewind(res);

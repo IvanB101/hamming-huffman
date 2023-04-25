@@ -19,4 +19,16 @@ target_link_libraries(${This}
     coding
     noise)
 
+add_library(c_procedures STATIC
+    src/c_procedures.h
+    src/c_procedures.c)
+
+target_include_directories(c_procedures  PUBLIC
+    ${CMAKE_CURRENT_LIST_DIR})
+
+target_link_libraries(${This}
+    bitarr
+    coding
+    noise)
+
 # For Testing

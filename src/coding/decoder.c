@@ -1,18 +1,20 @@
 #include "coder.h"
 
 #include "../bitarr/bitarr.h"
+
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 
-void correct(void* block, int block_size, unsigned int exponent, void *masks);
+void correct(void* block, uint32_t block_size, uint32_t exponent, void *masks);
 
-int unpack(void* buffer, void* block, int block_size, int buff_offset);
+int unpack(void* buffer, void* result, uint32_t block_size, uint32_t buff_offset);
 
-int decode(FILE *fd, FILE *res, int block_size, unsigned int exponent, int correction) {
+int decode(FILE *fd, FILE *res, int block_size, uint32_t exponent, int correction) {
     void *masks = init_masks();
 
-    unsigned int  block_size_bytes = block_size / 8;
-    unsigned long file_size, n_blocks;
+    uint32_t  block_size_bytes = block_size / 8;
+    uint64_t file_size, n_blocks;
     int buff_offset = 0;
     
     fread((void*)&n_blocks, sizeof(long), 1, fd);
@@ -39,15 +41,13 @@ int decode(FILE *fd, FILE *res, int block_size, unsigned int exponent, int corre
     return 0;
 }
 
-void correct(void* block, int block_size_bytes, unsigned int exponent, void *masks) {
-    unsigned int sindrome = 0, i;
+void correct(void* block, uint32_t block_size_bytes, uint32_t exponent, void *masks) {
+    uint32_t sindrome = 0, i;
 
     // calculates the block syndrome
     for(i = 0; i < exponent; i++) {
         sindrome |= (masked_parity(block, (void*)(masks + i * MAX_BLOCK_SIZE), block_size_bytes) << i);
     }
-
-    printf("Sindrome: %s\n", to_bit_string((void*)&sindrome, 1) );
 
     // Checks if the parity of the blocks needs correction
     if(parity(block, block_size_bytes)) {
@@ -58,7 +58,7 @@ void correct(void* block, int block_size_bytes, unsigned int exponent, void *mas
 }
 
 
-int unpack(void* buffer, void* result, int block_size, int buff_offset) {
+int unpack(void* buffer, void* result, uint32_t block_size, uint32_t buff_offset) {
     int remaining = block_size - 2, start_from = 2, start_to = buff_offset, size = 1;
 
     while(remaining > 0) {
@@ -74,29 +74,3 @@ int unpack(void* buffer, void* result, int block_size, int buff_offset) {
     return start_to;
 }
 
-int introduce_error(FILE *fd, FILE *res, int block_size, unsigned int exponent){
-    unsigned int  block_size_bytes = block_size / 8;
-    unsigned long file_size, n_blocks;
-    
-    fread((void*)&n_blocks, sizeof(long), 1, fd);
-    fread((void*)&file_size, sizeof(long), 1, fd);
-
-    void *buffer = malloc(n_blocks * block_size_bytes);
-
-    fread(buffer, 1, n_blocks * block_size_bytes, fd);
-
-    srand(546514843103518461);
-
-    int module_error = rand() % exponent;
-    int position_error = rand() % block_size;
-
-    flip_bit((void*)(buffer + module_error), position_error);
-
-    fwrite((void*)&n_blocks, sizeof(long), 1, res);
-    fwrite((void*)&file_size, sizeof(long), 1, res);
-
-    fwrite(buffer, 1, n_blocks * block_size_bytes, res);
-    
-    free(buffer);
-    return 0;
-}

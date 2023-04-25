@@ -7,20 +7,17 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
+#include <stdint.h>
 
-int make_space(void* buffer, void* block, int block_size, int buff_offset);
+int pack(void* buffer, void* block, uint32_t block_size, uint32_t buff_offset);
 
-void protect(void* block, int block_size_bytes, unsigned int exponent, void *masks);
+void protect(void* block, uint32_t block_size_bytes, uint32_t exponent, void *masks);
 
-void test(FILE *fd, FILE *res) {
-    encode(fd, res, 32, 5);
-}
-
-int encode(FILE *fd, FILE *res, unsigned int block_size, unsigned int exponent) {
+int encode(FILE *fd, FILE *res, uint32_t block_size, unsigned int exponent) {
     void *masks = init_masks();
 
-    unsigned int info_bits, buff_offset, block_size_bytes = block_size / 8;
-    unsigned long file_size, n_blocks;
+    uint32_t info_bits, buff_offset, block_size_bytes = block_size / 8;
+    uint64_t file_size, n_blocks;
 
     fseek(fd, 0L, SEEK_END);
     file_size = ftell(fd);
@@ -40,7 +37,7 @@ int encode(FILE *fd, FILE *res, unsigned int block_size, unsigned int exponent) 
     for(int i = 0, buff_offset = 0; i < n_blocks; i++) {
         void *block = (void*)(result + i * block_size_bytes);
 
-        buff_offset = make_space(
+        buff_offset = pack(
                 buffer,
                 block,
                 block_size,
@@ -67,7 +64,7 @@ int encode(FILE *fd, FILE *res, unsigned int block_size, unsigned int exponent) 
  * @param exponent to which to elevate 2 to obtain block_size
  * @param masks array of masks to check parity of diferent groups of bits
  */
-void protect(void* block, int block_size_bytes, unsigned int exponent, void *masks) {
+void protect(void* block, uint32_t block_size_bytes, uint32_t exponent, void *masks) {
     int i, j = 1;
     // Control bits for hamming
     for(i = 0; i < exponent; i++) {
@@ -86,7 +83,7 @@ void protect(void* block, int block_size_bytes, unsigned int exponent, void *mas
 
 /**
  */
-int make_space(void* buffer, void* block, int block_size, int buff_offset) {
+int pack(void* buffer, void* block, uint32_t block_size, uint32_t buff_offset) {
     int remaining = block_size - 2, start_from = buff_offset, start_to = 2, size = 1;
 
     while(remaining > 0) {
