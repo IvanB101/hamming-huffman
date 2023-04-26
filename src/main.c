@@ -6,6 +6,8 @@
 #include <error.h>
 #include <errno.h>
 
+#include "./c_procedures.h"
+
 #include "coding/coder.h"
 #include "noise/generator.h"
 #include "bitarr/bitarr.h"

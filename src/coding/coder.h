@@ -16,11 +16,9 @@
  *
  * For correct functioning, block_size has to be a power of 2 
 */
-int encode(FILE *fd, FILE *res, unsigned int block_size, unsigned int exponent);
+char* encode_i(FILE *fd, FILE *res, unsigned int block_size, unsigned int exponent);
 
-int decode(FILE *fd, FILE *res, int block_size, unsigned int exponent, int correct);
-
-int introduce_error(FILE *fd, FILE *res, int block_size, unsigned int exponent);
+char* decode_i(FILE *fd, FILE *res, int block_size, unsigned int exponent, int correct);
 
 void* init_masks();
 

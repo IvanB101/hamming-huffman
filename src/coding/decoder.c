@@ -10,7 +10,7 @@ void correct(void* block, uint32_t block_size, uint32_t exponent, void *masks);
 
 int unpack(void* buffer, void* result, uint32_t block_size, uint32_t buff_offset);
 
-int decode(FILE *fd, FILE *res, int block_size, uint32_t exponent, int correction) {
+char* decode_i(FILE *fd, FILE *res, int block_size, uint32_t exponent, int correction) {
     void *masks = init_masks();
 
     uint32_t  block_size_bytes = block_size / 8;
@@ -38,7 +38,7 @@ int decode(FILE *fd, FILE *res, int block_size, uint32_t exponent, int correctio
 
     fwrite(result, 1, file_size, res);
     
-    return 0;
+    return NULL;
 }
 
 void correct(void* block, uint32_t block_size_bytes, uint32_t exponent, void *masks) {

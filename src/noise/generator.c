@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <time.h>
 
-int corrupt(FILE *fd, FILE *res, int block_size, uint32_t exponent){
+char* corrupt_i(FILE *fd, FILE *res, int block_size, uint32_t exponent){
     uint32_t  block_size_bytes = block_size / 8;
     uint64_t file_size, n_blocks;
     
@@ -31,5 +31,5 @@ int corrupt(FILE *fd, FILE *res, int block_size, uint32_t exponent){
     fwrite(buffer, 1, n_blocks * block_size_bytes, res);
     
     free(buffer);
-    return 0;
+    return NULL;
 }

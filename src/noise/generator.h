@@ -3,6 +3,6 @@
 
 #include <stdio.h>
 
-int corrupt(FILE *fd, FILE *res, int block_size, unsigned int exponent);
+char* corrupt_i(FILE *fd, FILE *res, int block_size, unsigned int exponent);
 
 #endif 

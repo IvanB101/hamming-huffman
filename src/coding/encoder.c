@@ -13,7 +13,7 @@ int pack(void* buffer, void* block, uint32_t block_size, uint32_t buff_offset);
 
 void protect(void* block, uint32_t block_size_bytes, uint32_t exponent, void *masks);
 
-int encode(FILE *fd, FILE *res, uint32_t block_size, unsigned int exponent) {
+char* encode_i(FILE *fd, FILE *res, uint32_t block_size, unsigned int exponent) {
     void *masks = init_masks();
 
     uint32_t info_bits, buff_offset, block_size_bytes = block_size / 8;
@@ -54,7 +54,7 @@ int encode(FILE *fd, FILE *res, uint32_t block_size, unsigned int exponent) {
     free(buffer);
     free(result);
 
-    return 0;
+    return NULL;
 }
 
 /**
