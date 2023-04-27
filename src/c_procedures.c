@@ -12,12 +12,14 @@
 
 char* get_extention(char* path);
 
-char* change_extention(char* path, char* new_ext);
+void change_extention(char* path, char* new_ext);
 
 char* encode(char* path, uint32_t block_size) {
     char* err;
     char* ext = get_extention(path);
-    if(strncmp(ext, "txt", strlen(ext))) {
+    char* valid = "txt";
+
+    if(strcmp(ext, "txt")) {
         return "Invalid file extention";
     }
 
@@ -92,7 +94,6 @@ char* decode(char* path, int correct) {
         ext[1] = 'E';
     }
 
-    change_extention(path, "txt");
     res = fopen(path, "wb");
 
     if(errno) {
@@ -135,7 +136,6 @@ char* corrupt(char* path) {
     fd = fopen(path, "rb");
 
     ext[1] = 'E';
-    change_extention(path, ext);
     res = fopen(path, "wb");
 
     if(errno) {
@@ -174,7 +174,7 @@ char* get_extention(char* path) {
     return NULL;
 }
 
-char* change_extention(char* path, char* new_ext) {
+void change_extention(char* path, char* new_ext) {
     char* old_ext = get_extention(path);
 
     uint32_t diff;
@@ -190,7 +190,18 @@ char* change_extention(char* path, char* new_ext) {
         path = temp;
     }
     
-    path[strlen(path) - strlen(old_ext) - 1] = '\0';
+    path[strlen(path) - strlen(old_ext)] = '\0';
 
     strcat(path, new_ext);
+}
+
+int equal(char* str1, char* str2) {
+    int i = 0;
+    while(str1[i] != 0 && str2[i] != 0) {
+        if(str1[i] != str2[i]) {
+            return 0;
+        }
+    }
+
+    return str1[i] != str2[i];
 }

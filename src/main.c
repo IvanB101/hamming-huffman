@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,48 +15,28 @@
 
 int main() {
     FILE *fd, *res, *pepe, *error;
+    uint32_t block_size = 2048;
 
-    char read_file[] = "../Primero.txt";
-    char write_file[] = "../Intermedio.HA1";
-    char error_file[] = "../ConError.HE1";
-    char result[] = "../Final.txt";
+    char file[] = "../Primero.txt";
+    char* err;
 
-    if(!(fd = fopen(read_file, "rb"))) {
-        printf("Error abriendo %s\n", read_file);
-        perror(strerror(errno));
-        return -1;
-    }
-    if(!(res = fopen(write_file, "wb+"))) {
-        printf("Error abriendo %s\n", write_file);
-        perror(strerror(errno));
-        return -1;
-    }
-    if(!(pepe = fopen(result, "wb"))) {
-        printf("Error abriendo %s\n", result);
-        perror(strerror(errno));
-        return -1;
-    }
-    if(!(error = fopen(error_file, "wb+"))) {
-        printf("Error abriendo %s\n", error_file);
-        perror(strerror(errno));
+    err = encode(file, block_size);
+    if(err) {
+        printf("Error: %s\n", err);
         return -1;
     }
 
-    encode(fd, res, 32, 5);
+    err = corrupt(file);
+    if(err) {
+        printf("Error: %s\n", err);
+        return -1;
+    }
 
-    rewind(fd);
-    rewind(res);
-    rewind(pepe);
-    rewind(error);
-
-    corrupt(res, error, 32, 5);
-    
-    rewind(fd);
-    rewind(res);
-    rewind(pepe);
-    rewind(error);
-
-    decode(error, pepe, 32, 5, 1);
+    err = decode(file, 0);
+    if(err) {
+        printf("Error: %s\n", err);
+        return -1;
+    }
 
     return 0;
 }

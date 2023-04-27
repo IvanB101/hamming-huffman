@@ -12,23 +12,21 @@ add_subdirectory(src/coding)
 add_subdirectory(src/noise)
 add_subdirectory(src/bitarr)
 
-add_executable(${This} src/main.c)
-
-target_link_libraries(${This}
-    bitarr
-    coding
-    noise)
-
+# library for linking with gui
 add_library(c_procedures STATIC
     src/c_procedures.h
     src/c_procedures.c)
-
-target_include_directories(c_procedures  PUBLIC
-    ${CMAKE_CURRENT_LIST_DIR})
-
-target_link_libraries(${This}
+target_link_libraries(c_procedures
     bitarr
     coding
     noise)
+target_include_directories(c_procedures  PUBLIC
+    ${CMAKE_CURRENT_LIST_DIR})
 
-# For Testing
+# executable for cli
+add_executable(${This} src/main.c)
+target_link_libraries(${This}
+    bitarr
+    coding
+    noise
+    c_procedures)

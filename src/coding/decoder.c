@@ -28,7 +28,9 @@ char* decode_i(FILE *fd, FILE *res, int block_size, uint32_t exponent, int corre
     for(int i = 0; i < n_blocks; i++) {
         void *block = (void*)(buffer + i * block_size_bytes);
 
-        correct(block, block_size_bytes, exponent, masks);
+        if(correction) {
+            correct(block, block_size_bytes, exponent, masks);
+        }
 
         buff_offset = unpack(block, 
                         result,

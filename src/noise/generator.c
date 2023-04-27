@@ -18,12 +18,13 @@ char* corrupt_i(FILE *fd, FILE *res, int block_size, uint32_t exponent){
 
     fread(buffer, 1, n_blocks * block_size_bytes, fd);
 
-    srand(546514843103518461);
+    time_t utc_now = time(NULL);
+    srand(utc_now);
 
-    int module_error = rand() % exponent;
-    int position_error = rand() % block_size;
+    int block_index = rand() % exponent;
+    int block_offset = rand() % block_size;
 
-    flip_bit((void*)(buffer + module_error), position_error);
+    flip_bit((void*)(buffer + block_index), block_offset);
 
     fwrite((void*)&n_blocks, sizeof(long), 1, res);
     fwrite((void*)&file_size, sizeof(long), 1, res);
@@ -31,5 +32,6 @@ char* corrupt_i(FILE *fd, FILE *res, int block_size, uint32_t exponent){
     fwrite(buffer, 1, n_blocks * block_size_bytes, res);
     
     free(buffer);
+
     return NULL;
 }

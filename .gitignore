@@ -2,4 +2,6 @@ build/**
 *.txt
 *.HA*
 *.HE*
+*.DE*
+*.DC*
 .bashrc
