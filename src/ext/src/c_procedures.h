@@ -13,4 +13,4 @@ char* compress(char* path);
 
 char* decompress(char* path);
 
-#endif // !LIB
+#endif // !C_PROCEDURES

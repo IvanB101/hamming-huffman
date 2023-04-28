@@ -39,6 +39,9 @@ char* decode_i(FILE *fd, FILE *res, int block_size, uint32_t exponent, int corre
     }
 
     fwrite(result, 1, file_size, res);
+
+    free(buffer);
+    free(result);
     
     return NULL;
 }
