@@ -2,6 +2,7 @@
 #define CODER
 
 #include <stdio.h>
+#include <stdint.h>
 
 #define MAX_BLOCK_SIZE 65536
 #define EXPONENT 16
@@ -16,9 +17,9 @@
  *
  * For correct functioning, block_size has to be a power of 2 
 */
-char* encode_i(FILE *fd, FILE *res, unsigned int block_size, unsigned int exponent);
+char* encode(char *path, char *dest, uint64_t block_size, uint64_t  exponent);
 
-char* decode_i(FILE *fd, FILE *res, int block_size, unsigned int exponent, int correct);
+char* decode(char *path, char *dest, uint64_t block_size, uint64_t  exponent, int correct);
 
 void* init_masks();
 

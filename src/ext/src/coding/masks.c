@@ -25,8 +25,9 @@ void *init_masks() {
             }
             m <<= 1;
         }
-    }
 
+        inicialized = 1;
+    }
     return masks;
 }
 

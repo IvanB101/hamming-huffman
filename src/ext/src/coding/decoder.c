@@ -5,12 +5,25 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
+#include <errno.h>
 
 void correct(void* block, uint32_t block_size, uint32_t exponent, void *masks);
 
 int unpack(void* buffer, void* result, uint32_t block_size, uint32_t buff_offset);
 
-char* decode_i(FILE *fd, FILE *res, int block_size, uint32_t exponent, int correction) {
+char* decode(char *path, char *dest, uint64_t block_size, uint64_t  exponent, int correction) {
+    FILE *fd, *res;
+
+    fd = fopen(path, "rb");
+    if(!fd) {
+        return strerror(errno);
+    }
+    res = fopen(dest, "wb");
+    if(!res) {
+        return strerror(errno);
+    }
+
     void *masks = init_masks();
 
     uint32_t  block_size_bytes = block_size / 8;
@@ -39,9 +52,6 @@ char* decode_i(FILE *fd, FILE *res, int block_size, uint32_t exponent, int corre
     }
 
     fwrite(result, 1, file_size, res);
-
-    free(buffer);
-    free(result);
     
     return NULL;
 }

@@ -6,8 +6,21 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <time.h>
+#include <errno.h>
+#include <string.h>
 
-char* corrupt_i(FILE *fd, FILE *res, int block_size, uint32_t exponent){
+char* corrupt(char *path, char *dest, uint64_t block_size, uint64_t  exponent) {
+    FILE *fd, *res;
+
+    fd = fopen(path, "rb");
+    if(!fd) {
+        return strerror(errno);
+    }
+    res = fopen(dest, "wb");
+    if(!res) {
+        return strerror(errno);
+    }
+
     uint32_t  block_size_bytes = block_size / 8;
     uint64_t file_size, n_blocks;
     
