@@ -1,16 +1,14 @@
 mod raw;
 
 use std::ffi::{c_char, CStr, CString};
-use std::fmt;
-use std::string::ParseError;
 
 #[derive(Debug, Clone)]
 pub struct FfiError {
     pub message: String,
 }
 
-impl fmt::Display for FfiError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+impl std::fmt::Display for FfiError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
         write!(f, "{}", self.message)
     }
 }
@@ -18,12 +16,32 @@ impl fmt::Display for FfiError {
 impl std::error::Error for FfiError {}
 
 pub fn encode(path: String, block_size: u64) -> Result<(), FfiError> {
-    let err: *const c_char;
+    let valid_sizes: [u64; 3] = [32, 2048, 65536];
+    let exponents: [u64; 3] = [5, 11, 16];
+    let extentions: [&str; 3] = ["HA1", "HA2", "HA3"];
 
-    let c_path = CString::new(path).unwrap();
+    if !path.has_extention("txt") {
+        return Err(FfiError{message: String::from("Invalid extention")});
+    }
+
+    let ext;
+    let exponent;
+
+    println!("Block size: {}", block_size);
+    match valid_sizes.iter().position(|&x| x == block_size) {
+        Some(index) => {
+            ext = extentions[index];
+            exponent = exponents[index];
+        },
+        None => return Err(FfiError{message: String::from("Invalid block size")}),
+    }
+
+    let err: *const c_char;
+    let c_path = CString::new(path.clone()).unwrap();
+    let c_dest = CString::new(path.with_extention(ext)).unwrap();
 
     unsafe {
-        err = raw::encode(c_path.as_ptr(), block_size);
+        err = raw::encode(c_path.as_ptr(), c_dest.as_ptr(), block_size, exponent);
     }
 
     if err.is_null() {
@@ -37,28 +55,44 @@ pub fn encode(path: String, block_size: u64) -> Result<(), FfiError> {
     }
 }
 
-impl Convienience for String {
-    fn has_extention(path: &str, ext: &str) -> bool {
-        match path.find('.') {
-            Some(n) => path.split_at(n + 1).1 == ext,
+impl Convienience for &str {
+    fn has_extention(&self, ext: &str) -> bool {
+        match self.find('.') {
+            Some(n) => self.split_at(n + 1).1 == ext,
             None => ext.is_empty(),
         }
     }
 
-    fn change_extention(path: &str, new_ext: &str) -> String {
-        match path.find('.') {
-            Some(n) => {
-                let name = path.split_at(n).0;
+    fn with_extention(&self, ext: &str) -> String {
+        let name = match self.find('.') {
+            Some(n) => self.split_at(n).0,
+            None => self,
+        };
 
-                name.to_owned() + new_ext
-            }
-            None => path.to_owned() + new_ext,
-        }
+        name.to_owned() + "." + ext
     }
 }
 
-trait Convienience {
-    fn has_extention(path: &str, ext: &str) -> bool;
+impl Convienience for String {
+    fn has_extention(&self, ext: &str) -> bool {
+        match self.find('.') {
+            Some(n) => self.split_at(n + 1).1 == ext,
+            None => ext.is_empty(),
+        }
+    }
 
-    fn change_extention(path: &str, new_ext: &str) -> String;
+    fn with_extention(&self, ext: &str) -> String {
+        let name = match self.find('.') {
+            Some(n) => self.split_at(n).0,
+            None => self,
+        };
+
+        name.to_owned() + "." + ext
+    }
+}
+
+pub trait Convienience {
+    fn has_extention(&self, ext: &str) -> bool;
+
+    fn with_extention(&self, new_ext: &str) -> String;
 }

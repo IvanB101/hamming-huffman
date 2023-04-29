@@ -1,5 +1,9 @@
 mod ext;
 
 fn main() {
-    ext::encode(String::from("Primero.txt"), 32).unwrap();
+    let path = String::from("Primero.txt");
+    match ext::encode(path, 32) {
+        Ok(()) => println!("Succes"),
+        Err(err) => println!("{}", err.message),
+    }
 }
