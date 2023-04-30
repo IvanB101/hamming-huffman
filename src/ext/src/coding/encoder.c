@@ -65,6 +65,9 @@ char* encode(char *path, char *dest, uint64_t block_size, uint64_t  exponent) {
     free(buffer);
     free(result);
 
+    fclose(fd);
+    fclose(res);
+    
     return NULL;
 }
 

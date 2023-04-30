@@ -53,6 +53,12 @@ char* decode(char *path, char *dest, uint64_t block_size, uint64_t  exponent, in
 
     fwrite(result, 1, file_size, res);
     
+    free(buffer);
+    free(result);
+
+    fclose(fd);
+    fclose(res);
+    
     return NULL;
 }
 

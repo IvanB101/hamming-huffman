@@ -46,5 +46,8 @@ char* corrupt(char *path, char *dest, uint64_t block_size, uint64_t  exponent) {
     
     free(buffer);
 
+    fclose(fd);
+    fclose(res);
+
     return NULL;
 }
