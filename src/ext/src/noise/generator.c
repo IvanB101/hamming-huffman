@@ -2,52 +2,52 @@
 
 #include "../bitarr/bitarr.h"
 
+#include <errno.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
-#include <time.h>
-#include <errno.h>
 #include <string.h>
+#include <time.h>
 
-char* corrupt(char *path, char *dest, uint64_t block_size, uint64_t  exponent) {
-    FILE *fd, *res;
+char *corrupt(char *path, char *dest, uint64_t block_size, uint64_t exponent) {
+  FILE *fd, *res;
 
-    fd = fopen(path, "rb");
-    if(!fd) {
-        return strerror(errno);
-    }
-    res = fopen(dest, "wb");
-    if(!res) {
-        return strerror(errno);
-    }
+  fd = fopen(path, "rb");
+  if (!fd) {
+    return strerror(errno);
+  }
+  res = fopen(dest, "wb");
+  if (!res) {
+    return strerror(errno);
+  }
 
-    uint32_t  block_size_bytes = block_size / 8;
-    uint64_t file_size, n_blocks;
-    
-    fread((void*)&n_blocks, sizeof(long), 1, fd);
-    fread((void*)&file_size, sizeof(long), 1, fd);
+  uint32_t block_size_bytes = block_size / 8;
+  uint64_t file_size, n_blocks;
 
-    void *buffer = malloc(n_blocks * block_size_bytes);
+  fread((void *)&n_blocks, sizeof(long), 1, fd);
+  fread((void *)&file_size, sizeof(long), 1, fd);
 
-    fread(buffer, 1, n_blocks * block_size_bytes, fd);
+  void *buffer = malloc(n_blocks * block_size_bytes);
 
-    time_t utc_now = time(NULL);
-    srand(utc_now);
+  fread(buffer, 1, n_blocks * block_size_bytes, fd);
 
-    int block_index = rand() % exponent;
-    int block_offset = rand() % block_size;
+  time_t utc_now = time(NULL);
+  srand(utc_now);
 
-    flip_bit((void*)(buffer + block_index), block_offset);
+  int block_index = rand() % exponent;
+  int block_offset = rand() % block_size;
 
-    fwrite((void*)&n_blocks, sizeof(long), 1, res);
-    fwrite((void*)&file_size, sizeof(long), 1, res);
+  flip_bit((void *)(buffer + block_index), block_offset);
 
-    fwrite(buffer, 1, n_blocks * block_size_bytes, res);
-    
-    free(buffer);
+  fwrite((void *)&n_blocks, sizeof(long), 1, res);
+  fwrite((void *)&file_size, sizeof(long), 1, res);
 
-    fclose(fd);
-    fclose(res);
+  fwrite(buffer, 1, n_blocks * block_size_bytes, res);
 
-    return NULL;
+  free(buffer);
+
+  fclose(fd);
+  fclose(res);
+
+  return NULL;
 }

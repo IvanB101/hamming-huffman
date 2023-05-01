@@ -4,6 +4,7 @@ use ext::Extention;
 
 fn main() {
     let path = String::from("Primero.txt");
+    /*
     print!("Encode: ");
     match ext::encode(path.clone(), 32) {
         Ok(()) => println!("Success"),
@@ -21,6 +22,7 @@ fn main() {
         Ok(()) => println!("Success"),
         Err(err) => println!("{}", err.message),
     };
+    */
 
     print!("Compress: ");
     match ext::compress(path.clone().with_extention("txt")) {
