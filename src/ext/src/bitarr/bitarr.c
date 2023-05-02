@@ -1,6 +1,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 #include "bitarr.h"
 
@@ -67,10 +68,10 @@ void move(void *from, void *to, int start_from, int start_to, int size) {
     int dist_to = 8 - (current_to % 8);
     int to_move = min(min(dist_from, dist_to), size - passed);
 
-    unsigned char mask = ((int)1 << to_move) - 1;
+    uint8_t mask = ((int)1 << to_move) - 1;
 
-    unsigned char char_from = ((unsigned char *)from)[current_from / 8];
-    unsigned char temp = char_from & (mask << (dist_from - to_move));
+    uint8_t char_from = ((uint8_t *)from)[current_from / 8];
+    uint8_t temp = char_from & (mask << (dist_from - to_move));
 
     mask <<= dist_to - to_move;
     int diference = dist_from - dist_to;
@@ -80,7 +81,7 @@ void move(void *from, void *to, int start_from, int start_to, int size) {
       temp >>= diference;
     }
 
-    unsigned char *char_to = &((unsigned char *)to)[current_to / 8];
+    uint8_t *char_to = &((uint8_t *)to)[current_to / 8];
     *char_to &= ~mask;
     *char_to |= temp;
 
@@ -92,10 +93,10 @@ void move(void *from, void *to, int start_from, int start_to, int size) {
 
 short parity(void *arr, unsigned int size) {
   unsigned int i;
-  unsigned char temp = ((unsigned char *)arr)[0], res = 0;
+  uint8_t temp = ((uint8_t *)arr)[0], res = 0;
 
   for (i = 1; i < size; i++) {
-    temp ^= ((unsigned char *)arr)[i];
+    temp ^= ((uint8_t *)arr)[i];
   }
 
   for (i = 0; i < 8; i++) {
@@ -109,11 +110,11 @@ short parity(void *arr, unsigned int size) {
 
 short masked_parity(void *arr, void *mask, unsigned int size) {
   unsigned int i;
-  unsigned char temp = ((unsigned char *)arr)[0] & ((unsigned char *)mask)[0],
-                res = 0;
+  uint8_t temp = ((uint8_t *)arr)[0] & ((uint8_t *)mask)[0],
+               res = 0;
 
   for (i = 1; i < size; i++) {
-    temp ^= ((unsigned char *)arr)[i] & ((unsigned char *)mask)[i];
+    temp ^= ((uint8_t *)arr)[i] & ((uint8_t *)mask)[i];
   }
 
   for (i = 0; i < 8; i++) {
