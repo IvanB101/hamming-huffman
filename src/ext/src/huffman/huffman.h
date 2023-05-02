@@ -10,6 +10,12 @@ typedef struct {
   double prob;
 } char_info;
 
+typedef struct {
+    uint32_t card_orig;
+    uint32_t distinct;
+    char_info *nodes;
+} encoding_tree;
+
 /**
  * Compresses a file a writes de result to another file
  * @param path of the file to compress

@@ -24,6 +24,25 @@ char *str_clone(char *str);
  */
 void push_code_bit(char_info *node, uint8_t bit);
 
+/**
+ * Generates an auxiliary structure for generating a new encoding for characters
+ * for compressing a file
+ * @return a tree with its leaves inicialized
+ */
+encoding_tree init_tree(void *buffer, uint32_t card_orig, uint64_t file_size);
+
+/**
+ * Constructs the tree from the leaves inicialized in init tree
+ */
+void build_tree(encoding_tree tree);
+
+/**
+ * Uses the built tree in build_tree for generating the new encoding_tree
+ * @return a table in which each entry contains the new code for the value of
+ * the index
+ */
+char_info **reduce_tree(encoding_tree tree);
+
 char *compress(char *path, char *dest) {
   FILE *fd, *res;
 
@@ -36,13 +55,7 @@ char *compress(char *path, char *dest) {
     return strerror(errno);
   }
 
-  uint16_t card_orig = 128;
-  uint16_t ocurrencies[card_orig];
-  for (int i = 0; i < card_orig; i++) {
-    ocurrencies[i] = 0;
-  }
-
-  uint16_t distinct = 0;
+  uint32_t card_orig = 128;
   uint64_t file_size;
 
   fseek(fd, 0L, SEEK_END);
@@ -53,96 +66,11 @@ char *compress(char *path, char *dest) {
   void *buffer = malloc(file_size);
   fread(buffer, 1, file_size, fd);
 
-  // Counting ocurrencies of each character
-  for (int i = 0; i < file_size; i++) {
-    if (!ocurrencies[((char *)buffer)[i]]++) {
-      distinct++;
-    }
-  }
+  encoding_tree tree = init_tree(buffer, card_orig, file_size);
 
-  // Colecting ocurrencies for each character
-  char_info *tree = (char_info *)malloc(sizeof(char_info) *
-                                        (distinct * (distinct + 1) / 2 - 1));
-  uint8_t j = 0;
-  for (int i = 0; i < card_orig; i++) {
-    // Passing ocurrencies to a better format for code generation
-    if (ocurrencies[i]) {
-      tree[j] = (char_info){.orig = i,
-                            .code = NULL,
-                            .code_length = 0,
-                            .prob = ocurrencies[i] / (double)file_size};
-      j++;
-    }
-  }
+  build_tree(tree);
 
-  // Generation of tree, merging two character with less ocurrencies
-  uint32_t base = 0, new_base = distinct;
-  for (int i = distinct - 1; i >= 2; i--) {
-    int k = 0;
-    char_info a = tree[base], b = tree[base + 1];
-    char_info new = (char_info){
-        .orig = 0, .code = NULL, .code_length = 0, .prob = a.prob + b.prob};
-
-    for (; k - 1 < i; k++) {
-      if (tree[base + k + 2].prob < new.prob) {
-        break;
-      }
-      tree[new_base + k].prob = tree[base + k + 2].prob;
-      tree[new_base + k].orig = 1;
-    }
-    tree[new_base + k] = new;
-    k++;
-    for (; k < i; k++) {
-      tree[new_base + k].prob = tree[base + k + 1].prob;
-      tree[new_base + k].orig = 1;
-    }
-
-    base = new_base;
-    new_base += i;
-  }
-
-  // Reduction of the tree, generating new encoding
-  tree[base].code = (char *)malloc(1);
-  tree[base].code[0] = 0;
-  tree[base].code_length = 1;
-  tree[base + 1].code = (char *)malloc(1);
-  tree[base + 1].code[0] = 1;
-  tree[base + 1].code_length = 1;
-  for (int i = 2; i < distinct; i++) {
-    new_base = base - i - 1;
-    char_info node;
-
-    int k = 0;
-    while (node.orig) {
-      node = tree[base + k];
-      tree[new_base + k + 2].code = node.code;
-      tree[new_base + k + 2].code_length = node.code_length;
-      k++;
-    }
-    node = tree[base + k];
-
-    tree[new_base].code = str_clone(node.code);
-    tree[new_base].code_length = node.code_length;
-    push_code_bit(&tree[new_base], 0);
-
-    tree[new_base + 1].code = node.code;
-    tree[new_base + 1].code_length = node.code_length;
-    push_code_bit(&tree[new_base], 1);
-
-    for (; k + 1 < i; k++) {
-      node = tree[base + k + 1];
-      tree[new_base + k + 2].code = node.code;
-      tree[new_base + k + 2].code_length = node.code_length;
-    }
-
-    base = new_base;
-  }
-
-  // Puting resulting codes in arrays for faster access
-  char_info *table[card_orig];
-  for (int i = 0; i < distinct; i++) {
-    table[tree[i].orig] = &tree[i];
-  }
+  char_info **table = reduce_tree(tree);
 
   // Coding of information previosly read in buffer
   uint64_t buff_offset = 0;
@@ -157,9 +85,9 @@ char *compress(char *path, char *dest) {
 
   // Writing the results in the file
   // Number of table entries
-  fwrite((void *)&distinct, 1, 1, res);
-  for (int i = 0; i < distinct; i++) {
-    char_info entry = tree[i];
+  fwrite((void *)&tree.distinct, sizeof(uint32_t), 1, res);
+  for (int i = 0; i < tree.distinct; i++) {
+    char_info entry = tree.nodes[i];
     // Character for the table entry
     fwrite((void *)&entry.orig, 1, 1, res);
     // Length of character code
@@ -183,13 +111,131 @@ char *compress(char *path, char *dest) {
   fwrite(result, 1, info_bytes, res);
 
   free(buffer);
-  free((void *)tree);
+  free((void *)tree.nodes);
+  free((void *)table);
   free(result);
 
   fclose(fd);
   fclose(res);
 
   return NULL;
+}
+
+encoding_tree init_tree(void *buffer, uint32_t card_orig, uint64_t file_size) {
+  encoding_tree tree = (encoding_tree){
+      .card_orig = card_orig,
+      .distinct = 0,
+      .nodes = NULL,
+  };
+
+  uint32_t *ocurrencies = (uint32_t *)malloc(card_orig * sizeof(uint32_t));
+  for (int i = 0; i < card_orig; i++) {
+    ocurrencies[i] = 0;
+  }
+
+  uint32_t distinct = 0;
+  // Counting ocurrencies of each character
+  for (int i = 0; i < file_size; i++) {
+    if (!ocurrencies[((char *)buffer)[i]]++) {
+      tree.distinct++;
+    }
+  }
+
+  // Colecting ocurrencies for each character
+  tree.nodes = (char_info *)malloc(
+      sizeof(char_info) * (tree.distinct * (tree.distinct + 1) / 2 - 1));
+  uint8_t j = 0;
+  for (int i = 0; i < card_orig; i++) {
+    // Passing ocurrencies to a better format for code generation
+    if (ocurrencies[i]) {
+      tree.nodes[j] = (char_info){.orig = i,
+                                  .code = NULL,
+                                  .code_length = 0,
+                                  .prob = ocurrencies[i] / (double)file_size};
+      j++;
+    }
+  }
+
+  return tree;
+}
+
+void build_tree(encoding_tree tree) {
+  uint32_t base = 0, new_base = tree.distinct;
+  char_info *nodes = tree.nodes;
+  for (int i = tree.distinct - 1; i >= 2; i--) {
+    int k = 0;
+    char_info a = nodes[base], b = nodes[base + 1];
+    char_info new = (char_info){
+        .orig = 0, .code = NULL, .code_length = 0, .prob = a.prob + b.prob};
+
+    for (; k - 1 < i; k++) {
+      if (nodes[base + k + 2].prob < new.prob) {
+        break;
+      }
+      nodes[new_base + k].prob = nodes[base + k + 2].prob;
+      nodes[new_base + k].orig = 1;
+    }
+
+    nodes[new_base + k] = new;
+    k++;
+
+    for (; k < i; k++) {
+      nodes[new_base + k].prob = nodes[base + k + 1].prob;
+      nodes[new_base + k].orig = 1;
+    }
+
+    base = new_base;
+    new_base += i;
+  }
+}
+
+char_info **reduce_tree(encoding_tree tree) {
+  uint32_t base = (tree.distinct * (tree.distinct + 1) / 2 - 1) - 2, new_base;
+  char_info *nodes = tree.nodes;
+
+  nodes[base].code = (char *)malloc(1);
+  nodes[base].code[0] = 0;
+  nodes[base].code_length = 1;
+  nodes[base + 1].code = (char *)malloc(1);
+  nodes[base + 1].code[0] = 1;
+  nodes[base + 1].code_length = 1;
+  for (int i = 2; i < tree.distinct; i++) {
+    new_base = base - i - 1;
+    char_info node;
+
+    int k = 0;
+    while (node.orig) {
+      node = nodes[base + k];
+      nodes[new_base + k + 2].code = node.code;
+      nodes[new_base + k + 2].code_length = node.code_length;
+      k++;
+    }
+    node = nodes[base + k];
+
+    nodes[new_base].code = str_clone(node.code);
+    nodes[new_base].code_length = node.code_length;
+    push_code_bit(&nodes[new_base], 0);
+
+    nodes[new_base + 1].code = node.code;
+    nodes[new_base + 1].code_length = node.code_length;
+    push_code_bit(&nodes[new_base], 1);
+
+    for (; k + 1 < i; k++) {
+      node = nodes[base + k + 1];
+      nodes[new_base + k + 2].code = node.code;
+      nodes[new_base + k + 2].code_length = node.code_length;
+    }
+
+    base = new_base;
+  }
+
+  // Puting resulting codes in arrays for faster access
+  char_info **table = malloc(tree.card_orig);
+  for (int i = 0; i < tree.distinct; i++) {
+    table[nodes[i].orig] = &nodes[i];
+  }
+
+  return table;
 }
 
 void push_code_bit(char_info *node, uint8_t bit) {
