@@ -207,7 +207,6 @@ char_info **reduce_tree(encoding_tree tree) {
 
     int index = 0, new_index = 2;
     while (node.orig) {
-
       nodes[new_base + new_index].code = node.code;
       nodes[new_base + new_index].code_length = node.code_length;
       index++;
@@ -233,17 +232,6 @@ char_info **reduce_tree(encoding_tree tree) {
 
     base = new_base;
   }
-
-  /*
-  for (int i = 0; i < tree.distinct - 1; i++) {
-    char_info entry = tree.nodes[i];
-    for (int j = i + 1; i < tree.distinct; j++) {
-      if (entry.code[0] == tree.nodes[j].code[0]) {
-        printf("Duplicados encontrados");
-      }
-    }
-  }
-  */
 
   // Puting resulting codes in arrays for faster access
   char_info **table = malloc(tree.card_orig);
