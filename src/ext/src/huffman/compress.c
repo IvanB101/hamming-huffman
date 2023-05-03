@@ -8,12 +8,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+void sort(char_info *arr, uint64_t size);
 /**
  * Clones a string
  * @param str pointer to the beginig of the string to clone
  * @return a clone of str
  */
-char *str_clone(char *str);
+char *str_clone(char *str, uint64_t size);
 
 /**
  * Adds a bit to the new code of a character
@@ -103,6 +104,8 @@ char *compress(char *path, char *dest) {
     info_bytes++;
   }
 
+  // Size in bytes of uncompressed information
+  fwrite((void *)&file_size, 1, sizeof(uint64_t), res);
   // Size in bytes of compressed information
   fwrite((void *)&info_bytes, 1, sizeof(uint64_t), res);
   // Size in bites of compressed information
@@ -128,6 +131,7 @@ encoding_tree init_tree(void *buffer, uint32_t card_orig, uint64_t file_size) {
       .nodes = NULL,
   };
 
+  // Array inicialization
   uint32_t *ocurrencies = (uint32_t *)malloc(card_orig * sizeof(uint32_t));
   for (int i = 0; i < card_orig; i++) {
     ocurrencies[i] = 0;
@@ -148,13 +152,14 @@ encoding_tree init_tree(void *buffer, uint32_t card_orig, uint64_t file_size) {
   for (int i = 0; i < card_orig; i++) {
     // Passing ocurrencies to a better format for code generation
     if (ocurrencies[i]) {
-      tree.nodes[j] = (char_info){.orig = i,
-                                  .code = NULL,
-                                  .code_length = 0,
-                                  .prob = ocurrencies[i] / (double)file_size};
-      j++;
+      tree.nodes[j++] = (char_info){.orig = i,
+                                    .code = NULL,
+                                    .code_length = 0,
+                                    .prob = ocurrencies[i] / (double)file_size};
     }
   }
+
+  sort(tree.nodes, tree.distinct);
 
   return tree;
 }
@@ -163,25 +168,23 @@ void build_tree(encoding_tree tree) {
   uint32_t base = 0, new_base = tree.distinct;
   char_info *nodes = tree.nodes;
   for (int i = tree.distinct - 1; i >= 2; i--) {
-    int k = 0;
+    int new_index = 0, index = 2;
     char_info a = nodes[base], b = nodes[base + 1];
     char_info new = (char_info){
         .orig = 0, .code = NULL, .code_length = 0, .prob = a.prob + b.prob};
 
-    for (; k - 1 < i; k++) {
-      if (nodes[base + k + 2].prob < new.prob) {
-        break;
-      }
-      nodes[new_base + k].prob = nodes[base + k + 2].prob;
-      nodes[new_base + k].orig = 1;
+    for (; (new_index + 1 < i) && (nodes[base + index].prob < new.prob);
+         new_index++, index++) {
+      nodes[new_base + new_index].prob = nodes[base + index].prob;
+      nodes[new_base + new_index].orig = 1;
     }
 
-    nodes[new_base + k] = new;
-    k++;
+    nodes[new_base + new_index] = new;
+    new_index++;
 
-    for (; k < i; k++) {
-      nodes[new_base + k].prob = nodes[base + k + 1].prob;
-      nodes[new_base + k].orig = 1;
+    for (; new_index < i; new_index++, index++) {
+      nodes[new_base + new_index].prob = nodes[base + index].prob;
+      nodes[new_base + new_index].orig = 1;
     }
 
     base = new_base;
@@ -193,41 +196,54 @@ char_info **reduce_tree(encoding_tree tree) {
   uint32_t base = (tree.distinct * (tree.distinct + 1) / 2 - 1) - 2, new_base;
   char_info *nodes = tree.nodes;
 
+  nodes[base].code_length = nodes[base + 1].code_length = 1;
   nodes[base].code = (char *)malloc(1);
-  nodes[base].code[0] = 0;
-  nodes[base].code_length = 1;
   nodes[base + 1].code = (char *)malloc(1);
+  nodes[base].code[0] = 0;
   nodes[base + 1].code[0] = 1;
-  nodes[base + 1].code_length = 1;
   for (int i = 2; i < tree.distinct; i++) {
     new_base = base - i - 1;
-    char_info node;
+    char_info node = nodes[base];
 
-    int k = 0;
+    int index = 0, new_index = 2;
     while (node.orig) {
-      node = nodes[base + k];
-      nodes[new_base + k + 2].code = node.code;
-      nodes[new_base + k + 2].code_length = node.code_length;
-      k++;
-    }
-    node = nodes[base + k];
 
-    nodes[new_base].code = str_clone(node.code);
+      nodes[new_base + new_index].code = node.code;
+      nodes[new_base + new_index].code_length = node.code_length;
+      index++;
+      new_index++;
+      node = nodes[base + index];
+    }
+
+    nodes[new_base].code = str_clone(node.code, node.code_length / 8 + 1);
     nodes[new_base].code_length = node.code_length;
     push_code_bit(&nodes[new_base], 0);
 
     nodes[new_base + 1].code = node.code;
     nodes[new_base + 1].code_length = node.code_length;
-    push_code_bit(&nodes[new_base], 1);
+    push_code_bit(&nodes[new_base + 1], 1);
 
-    for (; k + 1 < i; k++) {
-      node = nodes[base + k + 1];
-      nodes[new_base + k + 2].code = node.code;
-      nodes[new_base + k + 2].code_length = node.code_length;
+    index++;
+
+    for (; index < i; index++, new_index++) {
+      node = nodes[base + index];
+      nodes[new_base + new_index].code = node.code;
+      nodes[new_base + new_index].code_length = node.code_length;
     }
 
     base = new_base;
   }
+
+  /*
+  for (int i = 0; i < tree.distinct - 1; i++) {
+    char_info entry = tree.nodes[i];
+    for (int j = i + 1; i < tree.distinct; j++) {
+      if (entry.code[0] == tree.nodes[j].code[0]) {
+        printf("Duplicados encontrados");
+      }
+    }
+  }
+  */
 
   // Puting resulting codes in arrays for faster access
   char_info **table = malloc(tree.card_orig);
@@ -238,12 +254,28 @@ char_info **reduce_tree(encoding_tree tree) {
   return table;
 }
 
+void sort(char_info *arr, uint64_t size) {
+  for (int i = 0; i < size - 1; i++) {
+    int min = i;
+
+    for (int j = i + 1; j < size; j++) {
+      if (arr[j].prob < arr[min].prob) {
+        min = j;
+      }
+    }
+
+    char_info temp = arr[i];
+    arr[i] = arr[min];
+    arr[min] = temp;
+  }
+}
+
 void push_code_bit(char_info *node, uint8_t bit) {
   node->code_length++;
 
   if ((node->code_length % 8) == 1) {
     char *temp = (char *)malloc(node->code_length / 8 + 1);
-    if (node->code) {
+    if (node->code_length > 1) {
       move((void *)node->code, temp, 0, 0, node->code_length - 1);
       free((void *)node->code);
     }
@@ -257,9 +289,9 @@ void push_code_bit(char_info *node, uint8_t bit) {
   }
 }
 
-char *str_clone(char *str) {
-  char *ret = (char *)malloc(sizeof(str));
-  for (int i = 0; i < sizeof(str); i++) {
+char *str_clone(char *str, uint64_t size) {
+  char *ret = (char *)malloc(size);
+  for (int i = 0; i < size; i++) {
     ret[i] = str[i];
   }
 
