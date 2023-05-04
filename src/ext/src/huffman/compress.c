@@ -38,6 +38,11 @@ encoding_tree init_tree(void *buffer, uint32_t card_orig, uint64_t file_size);
 void build_tree(encoding_tree tree);
 
 /**
+ * Print the characters with their respective new code
+ */
+void print_coding(encoding_tree);
+
+/**
  * Uses the built tree in build_tree for generating the new encoding_tree
  * @return a table in which each entry contains the new code for the value of
  * the index
@@ -72,6 +77,8 @@ char *compress(char *path, char *dest) {
   build_tree(tree);
 
   char_info **table = reduce_tree(tree);
+
+  print_coding(tree);
 
   // Coding of information previosly read in buffer
   uint64_t buff_offset = 0;
@@ -284,4 +291,17 @@ char *str_clone(char *str, uint64_t size) {
   }
 
   return ret;
+}
+
+void print_coding(encoding_tree tree) {
+  for (int i = 0; i < tree.distinct; i++) {
+    int len = tree.nodes[i].code_length / 8;
+    if (tree.nodes[i].code_length % 8) {
+      len++;
+    }
+    printf("Char: %d\t", tree.nodes[i].orig);
+    printf("Code_length: %d\t", tree.nodes[i].code_length);
+    printf("Prob: %.4lf\t", tree.nodes[i].prob);
+    printf("Code: %s\n", to_bit_string((void *)tree.nodes[i].code, len));
+  }
 }
