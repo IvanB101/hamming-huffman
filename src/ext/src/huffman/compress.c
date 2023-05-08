@@ -100,6 +100,10 @@ char *compress(char *path, char *dest) {
     fwrite((void *)&entry.orig, 1, 1, res);
     // Length of character code
     fwrite((void *)&entry.code_length, 1, 1, res);
+    uint8_t len = entry.code_length / 8;
+    if(len % 8) {
+        len++;
+    }
     // New code for character
     fwrite((void *)&entry.code, entry.code_length, 1, res);
     // Fraction of original files characters equal to this one
@@ -180,7 +184,7 @@ void build_tree(encoding_tree tree) {
     char_info new = (char_info){
         .orig = 0, .code = NULL, .code_length = 0, .prob = a.prob + b.prob};
 
-    for (; (new_index + 1 < i) && (nodes[base + index].prob < new.prob);
+    for (; (new_index + 1 < i) && (nodes[base + index].prob <= new.prob);
          new_index++, index++) {
       nodes[new_base + new_index].prob = nodes[base + index].prob;
       nodes[new_base + new_index].orig = 1;
@@ -207,7 +211,7 @@ char_info **reduce_tree(encoding_tree tree) {
   nodes[base].code = (char *)malloc(1);
   nodes[base + 1].code = (char *)malloc(1);
   nodes[base].code[0] = 0;
-  nodes[base + 1].code[0] = 1;
+  nodes[base + 1].code[0] = 0b10000000;
   for (int i = 2; i < tree.distinct; i++) {
     new_base = base - i - 1;
     char_info node = nodes[base];
@@ -296,12 +300,9 @@ char *str_clone(char *str, uint64_t size) {
 void print_coding(encoding_tree tree) {
   for (int i = 0; i < tree.distinct; i++) {
     int len = tree.nodes[i].code_length / 8;
-    if (tree.nodes[i].code_length % 8) {
-      len++;
-    }
     printf("Char: %d\t", tree.nodes[i].orig);
     printf("Code_length: %d\t", tree.nodes[i].code_length);
     printf("Prob: %.4lf\t", tree.nodes[i].prob);
-    printf("Code: %s\n", to_bit_string((void *)tree.nodes[i].code, len));
+    printf("Code: %s\n", to_bit_string((void *)tree.nodes[i].code, tree.nodes[i].code_length));
   }
 }

@@ -1,7 +1,7 @@
 #include <math.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 
 #include "bitarr.h"
 
@@ -110,8 +110,7 @@ short parity(void *arr, unsigned int size) {
 
 short masked_parity(void *arr, void *mask, unsigned int size) {
   unsigned int i;
-  uint8_t temp = ((uint8_t *)arr)[0] & ((uint8_t *)mask)[0],
-               res = 0;
+  uint8_t temp = ((uint8_t *)arr)[0] & ((uint8_t *)mask)[0], res = 0;
 
   for (i = 1; i < size; i++) {
     temp ^= ((uint8_t *)arr)[i] & ((uint8_t *)mask)[i];
@@ -126,21 +125,26 @@ short masked_parity(void *arr, void *mask, unsigned int size) {
   return res;
 }
 
-char *to_bit_string(void *arr, int size) {
-  char *ret = (char *)malloc(size * 9 + 1);
+char *to_bit_string(void *arr, int bits) {
+  int total = bits + bits / 8 + 1;
+  int bytes = bits / 8;
+  if (bits % 8) {
+    bytes++;
+  }
+  char *ret = (char *)malloc(bits * 9 + 1);
 
-  int i, j, m;
-  for (i = 0; i < size; i++) {
+  int i, j = 0, m;
+  for (i = 0; i < bytes; i++) {
     char temp = ((char *)arr)[i];
 
-    for (j = 0, m = 1 << 7; j < 8; j++) {
-      ret[i * 9 + j] = ((temp & m) != 0) + '0';
+    for (m = 1 << 7; j < 8; j++) {
+      ret[j] = ((temp & m) != 0) + '0';
 
       m >>= 1;
     }
-    ret[i * 9 + j] = ' ';
+    ret[j++] = ' ';
   }
-  ret[size * 9] = '\0';
+  ret[total - 1] = '\0';
 
   return ret;
 }
