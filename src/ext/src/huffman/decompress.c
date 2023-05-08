@@ -98,6 +98,8 @@ decoding_tree* build_tree(encoding_tree tree){
             if (info.code[j]){
                 if(aux->der == NULL){
                     aux->der = init_node();
+                }else{
+                    printf("cagaste");
                 }
                 aux = aux->der;
             }
