@@ -10,7 +10,7 @@
 
 decoding_tree* init_node();
 
-decoding_tree* build_tree(encoding_tree tree);
+decoding_tree* expand_tree(encoding_tree tree);
 
 char *decompress(char *path, char *dest) {
     FILE *fd, *res;
@@ -35,7 +35,7 @@ char *decompress(char *path, char *dest) {
         // Length of character code
         fread((void *)&entry.code_length, 1, 1, fd);
         // New code for character
-        *entry.code = malloc(sizeof(entry.code_length));
+        entry.code = (char*)malloc(sizeof(entry.code_length));
         fread((void *)&entry.code, entry.code_length, 1, fd);
         // Fraction of original files characters equal to this one
         fread((void *)&entry.prob, sizeof(double), 1, fd);
@@ -54,7 +54,7 @@ char *decompress(char *path, char *dest) {
     // Compresed information
     fread(buffer, 1, info_bytes, fd);
 
-    decoding_tree *root = build_tree(tree);
+    decoding_tree *root = expand_tree(tree);
 
     uint16_t buff_index = 0;
     for (int i= 0; i < buff_offset; i++, buff_index++){
@@ -88,7 +88,7 @@ decoding_tree* init_node(){
     return node;
 }
 
-decoding_tree* build_tree(encoding_tree tree){
+decoding_tree* expand_tree(encoding_tree tree){
     decoding_tree *root = init_node();
 
     for (int i=0; i<tree.distinct; i++){

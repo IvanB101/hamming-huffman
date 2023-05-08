@@ -35,7 +35,7 @@ encoding_tree init_tree(void *buffer, uint32_t card_orig, uint64_t file_size);
 /**
  * Constructs the tree from the leaves inicialized in init tree
  */
-void build_tree(encoding_tree tree);
+void expand_tree(encoding_tree tree);
 
 /**
  * Print the characters with their respective new code
@@ -74,7 +74,7 @@ char *compress(char *path, char *dest) {
 
   encoding_tree tree = init_tree(buffer, card_orig, file_size);
 
-  build_tree(tree);
+  expand_tree(tree);
 
   char_info **table = reduce_tree(tree);
 
@@ -175,7 +175,7 @@ encoding_tree init_tree(void *buffer, uint32_t card_orig, uint64_t file_size) {
   return tree;
 }
 
-void build_tree(encoding_tree tree) {
+void expand_tree(encoding_tree tree) {
   uint32_t base = 0, new_base = tree.distinct;
   char_info *nodes = tree.nodes;
   for (int i = tree.distinct - 1; i >= 2; i--) {
