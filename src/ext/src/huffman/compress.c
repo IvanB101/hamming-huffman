@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 void sort(char_info *arr, uint64_t size);
 /**
@@ -14,7 +15,7 @@ void sort(char_info *arr, uint64_t size);
  * @param str pointer to the beginig of the string to clone
  * @return a clone of str
  */
-char *str_clone(char *str, uint64_t size);
+uint8_t *str_clone(uint8_t *str, uint64_t size);
 
 /**
  * Adds a bit to the new code of a character
@@ -36,11 +37,6 @@ encoding_tree init_tree(void *buffer, uint32_t card_orig, uint64_t file_size);
  * Constructs the tree from the leaves inicialized in init tree
  */
 void expand_tree(encoding_tree tree);
-
-/**
- * Print the characters with their respective new code
- */
-void print_coding(encoding_tree);
 
 /**
  * Uses the built tree in build_tree for generating the new encoding_tree
@@ -95,25 +91,18 @@ char *compress(char *path, char *dest) {
   // Number of table entries
   fwrite((void *)&tree.distinct, sizeof(uint32_t), 1, res);
   for (int i = 0; i < tree.distinct; i++) {
-    char_info entry = tree.nodes[i];
+    char_info *entry = &tree.nodes[i];
     // Character for the table entry
-    fwrite((void *)&entry.orig, 1, 1, res);
+    fwrite((void *)&entry->orig, 1, 1, res);
     // Length of character code
-    fwrite((void *)&entry.code_length, 1, 1, res);
-    uint8_t len = entry.code_length / 8;
-    if(len % 8) {
-        len++;
-    }
+    fwrite((void *)&entry->code_length, 1, 1, res);
     // New code for character
-    fwrite((void *)&entry.code, len, 1, res);
+    fwrite((void *)entry->code, 1, (uint8_t)ceil(entry->code_length / 8.0), res);
     // Fraction of original files characters equal to this one
-    fwrite((void *)&entry.prob, sizeof(double), 1, res);
+    fwrite((void *)&entry->prob, sizeof(double), 1, res);
   }
 
-  uint64_t info_bytes = buff_offset / 8;
-  if (buff_offset % 8) {
-    info_bytes++;
-  }
+  uint64_t info_bytes = ceil(buff_offset / 8.0);
 
   // Size in bytes of uncompressed information
   fwrite((void *)&file_size, 1, sizeof(uint64_t), res);
@@ -208,8 +197,8 @@ char_info **reduce_tree(encoding_tree tree) {
   char_info *nodes = tree.nodes;
 
   nodes[base].code_length = nodes[base + 1].code_length = 1;
-  nodes[base].code = (char *)malloc(1);
-  nodes[base + 1].code = (char *)malloc(1);
+  nodes[base].code = (uint8_t *)malloc(1);
+  nodes[base + 1].code = (uint8_t *)malloc(1);
   nodes[base].code[0] = 0;
   nodes[base + 1].code[0] = 0b10000000;
   for (int i = 2; i < tree.distinct; i++) {
@@ -273,7 +262,7 @@ void push_code_bit(char_info *node, uint8_t bit) {
   node->code_length++;
 
   if ((node->code_length % 8) == 1) {
-    char *temp = (char *)malloc(node->code_length / 8 + 1);
+    uint8_t *temp = (uint8_t *)malloc(node->code_length / 8 + 1);
     if (node->code_length > 1) {
       move((void *)node->code, temp, 0, 0, node->code_length - 1);
       free((void *)node->code);
@@ -288,8 +277,8 @@ void push_code_bit(char_info *node, uint8_t bit) {
   }
 }
 
-char *str_clone(char *str, uint64_t size) {
-  char *ret = (char *)malloc(size);
+uint8_t *str_clone(uint8_t *str, uint64_t size) {
+  uint8_t *ret = (uint8_t *)malloc(size);
   for (int i = 0; i < size; i++) {
     ret[i] = str[i];
   }
@@ -299,10 +288,10 @@ char *str_clone(char *str, uint64_t size) {
 
 void print_coding(encoding_tree tree) {
   for (int i = 0; i < tree.distinct; i++) {
-    int len = tree.nodes[i].code_length / 8;
     printf("Char: %d\t", tree.nodes[i].orig);
     printf("Code_length: %d\t", tree.nodes[i].code_length);
     printf("Prob: %.4lf\t", tree.nodes[i].prob);
-    printf("Code: %s\n", to_bit_string((void *)tree.nodes[i].code, tree.nodes[i].code_length));
+    printf("Code: %s\n", to_bit_string((void *)tree.nodes[i].code,
+                                       tree.nodes[i].code_length));
   }
 }

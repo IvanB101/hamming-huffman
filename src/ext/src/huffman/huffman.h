@@ -11,8 +11,8 @@
 
 */
 typedef struct {
-  char orig;
-  char *code;
+  uint8_t orig;
+  uint8_t *code;
   uint8_t code_length;
   double prob;
 } char_info;
@@ -30,8 +30,7 @@ typedef struct {
 */
 typedef struct node {
   char *caract;
-  struct node *izq; // nodo izquierdo representa el 1
-  struct node *der; // nodo derecho representa el 0
+  struct node *childs[2];
 } decoding_tree;
 
 /**
@@ -46,5 +45,10 @@ char* compress(char *path, char *dest);
 /**
  */
 char* decompress(char *path, char *dest);
+
+/**
+ * Print the characters with their respective new code
+ */
+void print_coding(encoding_tree);
 
 #endif // !HUFFMAN
