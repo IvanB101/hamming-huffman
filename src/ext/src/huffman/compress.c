@@ -78,8 +78,6 @@ char *compress(char *path, char *dest) {
 
   char_info **table = reduce_tree(tree);
 
-  print_coding(tree);
-
   // Coding of information previosly read in buffer
   uint64_t buff_offset = 0;
   for (int i = 0; i < file_size; i++) {
@@ -90,6 +88,8 @@ char *compress(char *path, char *dest) {
 
     buff_offset += table[temp]->code_length;
   }
+
+  print_coding(tree);
 
   // Writing the results in the file
   // Number of table entries
@@ -105,7 +105,7 @@ char *compress(char *path, char *dest) {
         len++;
     }
     // New code for character
-    fwrite((void *)&entry.code, entry.code_length, 1, res);
+    fwrite((void *)&entry.code, len, 1, res);
     // Fraction of original files characters equal to this one
     fwrite((void *)&entry.prob, sizeof(double), 1, res);
   }

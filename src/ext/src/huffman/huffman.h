@@ -25,11 +25,11 @@ typedef struct {
 
 /*
  @param caract cotains the caracter that node represents
- @param izq represents the code 0, also being the left son
- @param der represents the code 1, also being the right son 
+ @param izq represents the code 0, also being the left child
+ @param der represents the code 1, also being the right child
 */
 typedef struct node {
-  char caract;
+  char *caract;
   struct node *izq; // nodo izquierdo representa el 1
   struct node *der; // nodo derecho representa el 0
 } decoding_tree;
