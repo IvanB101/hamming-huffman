@@ -29,7 +29,7 @@ typedef struct {
  @param der represents the code 1, also being the right child
 */
 typedef struct node {
-  char *caract;
+  char caract;
   struct node *childs[2];
 } decoding_tree;
 

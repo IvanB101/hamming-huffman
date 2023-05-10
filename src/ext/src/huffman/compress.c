@@ -3,11 +3,11 @@
 #include "../bitarr/bitarr.h"
 
 #include <errno.h>
+#include <math.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
 
 void sort(char_info *arr, uint64_t size);
 /**
@@ -85,8 +85,6 @@ char *compress(char *path, char *dest) {
     buff_offset += table[temp]->code_length;
   }
 
-  print_coding(tree);
-
   // Writing the results in the file
   // Number of table entries
   fwrite((void *)&tree.distinct, sizeof(uint32_t), 1, res);
@@ -97,7 +95,8 @@ char *compress(char *path, char *dest) {
     // Length of character code
     fwrite((void *)&entry->code_length, 1, 1, res);
     // New code for character
-    fwrite((void *)entry->code, 1, (uint8_t)ceil(entry->code_length / 8.0), res);
+    uint8_t len = ceil(entry->code_length / 8.0);
+    fwrite((void *)entry->code, 1, len, res);
     // Fraction of original files characters equal to this one
     fwrite((void *)&entry->prob, sizeof(double), 1, res);
   }

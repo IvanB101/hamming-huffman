@@ -3,11 +3,11 @@
 #include "../bitarr/bitarr.h"
 
 #include <errno.h>
+#include <math.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
 
 decoding_tree *init_node();
 
@@ -29,7 +29,7 @@ char *decompress(char *path, char *dest) {
 
   encoding_tree tree;
   fread((void *)&tree.distinct, sizeof(uint32_t), 1, fd);
-  tree.nodes = (char_info *)malloc(tree.distinct);
+  tree.nodes = (char_info *)malloc(tree.distinct * sizeof(char_info));
   for (int i = 0; i < tree.distinct; i++) {
     char_info *entry = &tree.nodes[i];
     // Character for the table entry
@@ -42,16 +42,7 @@ char *decompress(char *path, char *dest) {
     fread((void *)entry->code, 1, len, fd);
     // Fraction of original files characters equal to this one
     fread((void *)&entry->prob, sizeof(double), 1, fd);
-
-    printf("Length: %d\t", len);
-    printf("Char: %d\t", entry->orig);
-    printf("Code_length: %d\t", entry->code_length);
-    printf("Prob: %.4lf\t", entry->prob);
-    printf("Code: %s\n",
-           to_bit_string((void *)entry->code, entry->code_length));
   }
-
-  print_coding(tree);
 
   // Size in bytes of uncompressed information
   fread((void *)&file_size, 1, sizeof(uint64_t), fd);
@@ -66,22 +57,20 @@ char *decompress(char *path, char *dest) {
   // Compresed information
   fread(buffer, 1, info_bytes, fd);
 
-  return NULL;
-
   decoding_tree *root = build_tree(tree);
 
   uint16_t buff_index = 0;
   uint8_t bit = 0;
-  for (int i = 0; i < buff_offset; i++) {
+  for (int i = 0; i < buff_offset;) {
     decoding_tree *aux = root;
 
     while (!aux->caract) {
-      move(buffer, (void *)&bit, buff_offset, 7, 1);
+      move(buffer, (void *)&bit, i++, 7, 1);
 
       aux = aux->childs[bit];
     }
 
-    move((void *)aux->caract, result, 0, buff_index, 8);
+    move((void *)&aux->caract, result, 0, buff_index, 8);
     buff_index += 8;
   }
 
@@ -93,7 +82,7 @@ char *decompress(char *path, char *dest) {
 decoding_tree *init_node() {
   decoding_tree *node = (decoding_tree *)malloc(sizeof(decoding_tree));
 
-  node->caract = NULL;
+  node->caract = 0;
   node->childs[0] = NULL;
   node->childs[1] = NULL;
 
@@ -113,14 +102,11 @@ decoding_tree *build_tree(encoding_tree tree) {
 
       if (!aux->childs[bit]) {
         aux->childs[bit] = init_node();
-      } else {
-        // printf("Codigo no instantaneo");
       }
       aux = aux->childs[bit];
     }
 
-    aux->caract = (char *)malloc(1);
-    *aux->caract = info.orig;
+    aux->caract = info.orig;
   }
 
   return root;
