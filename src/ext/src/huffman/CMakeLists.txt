@@ -1,8 +1,6 @@
-add_library(coding STATIC
-    coder.h
-    encoder.c
-    decoder.c
-    masks.c)
+add_library(huffman STATIC
+    huffman.h
+    huffman.c)
 
 target_include_directories(coding PUBLIC
     ${CMAKE_CURRENT_LIST_DIR})
