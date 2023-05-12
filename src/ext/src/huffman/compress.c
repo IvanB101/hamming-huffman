@@ -101,16 +101,12 @@ char *compress(char *path, char *dest) {
     fwrite((void *)&entry->prob, sizeof(double), 1, res);
   }
 
-  uint64_t info_bytes = ceil(buff_offset / 8.0);
-
   // Size in bytes of uncompressed information
   fwrite((void *)&file_size, 1, sizeof(uint64_t), res);
   // Size in bytes of compressed information
-  fwrite((void *)&info_bytes, 1, sizeof(uint64_t), res);
-  // Size in bites of compressed information
   fwrite((void *)&buff_offset, 1, sizeof(uint64_t), res);
   // Compresed information
-  fwrite(result, 1, info_bytes, res);
+  fwrite(result, 1, (uint64_t)ceil(buff_offset / 8.0), res);
 
   free(buffer);
   free((void *)tree.nodes);

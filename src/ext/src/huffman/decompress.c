@@ -15,7 +15,7 @@ decoding_tree *build_tree(encoding_tree tree);
 
 char *decompress(char *path, char *dest) {
   FILE *fd, *res;
-  uint64_t info_bytes, file_size, buff_offset;
+  uint64_t info_bytes, file_size, info_bits;
 
   fd = fopen(path, "rb");
   if (!fd) {
@@ -46,10 +46,10 @@ char *decompress(char *path, char *dest) {
 
   // Size in bytes of uncompressed information
   fread((void *)&file_size, 1, sizeof(uint64_t), fd);
-  // Size in bytes of compressed information
-  fread((void *)&info_bytes, 1, sizeof(uint64_t), fd);
   // Size in bites of compressed information
-  fread((void *)&buff_offset, 1, sizeof(uint64_t), fd);
+  fread((void *)&info_bits, 1, sizeof(uint64_t), fd);
+
+  info_bytes = ceil(info_bits / 8.0);
 
   void *result = malloc(file_size);
   void *buffer = malloc(info_bytes);
@@ -59,9 +59,9 @@ char *decompress(char *path, char *dest) {
 
   decoding_tree *root = build_tree(tree);
 
-  uint16_t buff_index = 0;
   uint8_t bit = 0;
-  for (int i = 0; i < buff_offset;) {
+  uint32_t buff_index = 0, i = 0;
+  for (; buff_index < file_size; buff_index++) {
     decoding_tree *aux = root;
 
     while (!aux->caract) {
@@ -70,9 +70,10 @@ char *decompress(char *path, char *dest) {
       aux = aux->childs[bit];
     }
 
-    move((void *)&aux->caract, result, 0, buff_index, 8);
-    buff_index += 8;
+    move((void *)&aux->caract, result, 0, buff_index * 8, 8);
   }
+
+  printf("File size: %ld\n", file_size);
 
   fwrite(result, 1, file_size, res);
 
