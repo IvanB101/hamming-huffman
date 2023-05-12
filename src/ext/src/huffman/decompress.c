@@ -73,8 +73,6 @@ char *decompress(char *path, char *dest) {
     move((void *)&aux->caract, result, 0, buff_index * 8, 8);
   }
 
-  printf("File size: %ld\n", file_size);
-
   fwrite(result, 1, file_size, res);
 
   return NULL;

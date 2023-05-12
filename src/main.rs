@@ -3,7 +3,7 @@ mod ext;
 use ext::Extention;
 
 fn main() {
-    let path = String::from("Primero.txt");
+    let path = String::from("test/Primero.txt");
     /*
     print!("Encode: ");
     match ext::encode(path.clone(), 32) {
