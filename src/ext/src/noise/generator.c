@@ -9,7 +9,7 @@
 #include <string.h>
 #include <time.h>
 
-char *corrupt(char *path, char *dest, uint64_t block_size, uint64_t exponent) {
+char *corrupt(char *path, char *dest, uint64_t block_size, uint64_t exponent, double probability) {
   FILE *fd, *res;
 
   fd = fopen(path, "rb");

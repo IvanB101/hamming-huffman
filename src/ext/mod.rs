@@ -19,10 +19,11 @@ pub fn encode(path: String, block_size: u64) -> Result<(), FfiError> {
     let valid_sizes: [u64; 3] = [32, 2048, 65536];
     let exponents: [u64; 3] = [5, 11, 16];
     let extentions: [&str; 3] = ["HA1", "HA2", "HA3"];
+    let valid_extentions: [&str; 1] = ["txt"];
 
-    if !path.has_extention("txt") {
+    if let None = valid_extentions.iter().position(|&x| path.has_extention(x)) {
         return Err(FfiError {
-            message: String::from("Invalid extention"),
+            message: String::from("Extension invalida"),
         });
     }
 
@@ -34,7 +35,7 @@ pub fn encode(path: String, block_size: u64) -> Result<(), FfiError> {
         exponent = exponents[index]
     } else {
         return Err(FfiError {
-            message: String::from("Invalid block size"),
+            message: String::from("Tamaño invalido"),
         });
     }
 
@@ -74,7 +75,7 @@ pub fn decode(path: String, correct: bool) -> Result<(), FfiError> {
         ext = extentions[correct as usize][index];
     } else {
         return Err(FfiError {
-            message: String::from("Invalid extention"),
+            message: String::from("Extension invalida"),
         });
     }
 
@@ -104,7 +105,7 @@ pub fn decode(path: String, correct: bool) -> Result<(), FfiError> {
     }
 }
 
-pub fn corrupt(path: String) -> Result<(), FfiError> {
+pub fn corrupt(path: String, probability: f64) -> Result<(), FfiError> {
     let sizes: [u64; 3] = [32, 2048, 65536];
     let exponents: [u64; 3] = [5, 11, 16];
     let valid_extentions = ["HA1", "HA2", "HA3"];
@@ -114,13 +115,19 @@ pub fn corrupt(path: String) -> Result<(), FfiError> {
     let block_size;
     let ext;
 
+    if probability < 0.0 || probability > 1.0 {
+        return Err(FfiError {
+            message: String::from("Probabilidad de error invalida"),
+        });
+    }
+
     if let Some(index) = valid_extentions.iter().position(|&x| path.has_extention(x)) {
         exponent = exponents[index];
         block_size = sizes[index];
         ext = extentions[index];
     } else {
         return Err(FfiError {
-            message: String::from("Invalid extention"),
+            message: String::from("Extension invalida"),
         });
     }
 
@@ -129,7 +136,13 @@ pub fn corrupt(path: String) -> Result<(), FfiError> {
     let c_dest = CString::new(path.with_extention(ext)).unwrap();
 
     unsafe {
-        err = raw::corrupt(c_path.as_ptr(), c_dest.as_ptr(), block_size, exponent);
+        err = raw::corrupt(
+            c_path.as_ptr(),
+            c_dest.as_ptr(),
+            block_size,
+            exponent,
+            probability,
+        );
     }
 
     if err.is_null() {
@@ -149,7 +162,7 @@ pub fn compress(path: String) -> Result<(), FfiError> {
 
     if let None = valid_extentions.iter().position(|&x| path.has_extention(x)) {
         return Err(FfiError {
-            message: String::from("Invalid extention"),
+            message: String::from("Extension invalida"),
         });
     }
 
@@ -202,37 +215,61 @@ pub fn decompress(path: String) -> Result<(), FfiError> {
 
 impl Extention for &str {
     fn has_extention(&self, ext: &str) -> bool {
-        match self.find('.') {
-            Some(n) => self.split_at(n + 1).1 == ext,
+        match self.split('.').last() {
+            Some(e) => e == ext,
             None => ext.is_empty(),
         }
     }
 
     fn with_extention(&self, ext: &str) -> String {
-        let name = match self.find('.') {
-            Some(n) => self.split_at(n).0,
-            None => self,
+        let parts = self.split('/');
+        let mut path = "".to_owned();
+
+        if parts.clone().count() > 1 {
+            for part in parts.clone().take(parts.clone().count() - 1) {
+                path += part;
+                path += "/";
+            }
+        }
+
+        let file = parts.last().unwrap_or(self);
+
+        let name = match file.chars().rev().position(|x| x == '.') {
+            Some(index) => file.split_at(file.len() - 1 - index).0,
+            None => file,
         };
 
-        name.to_owned() + "." + ext
+        path + name + "." + ext
     }
 }
 
 impl Extention for String {
     fn has_extention(&self, ext: &str) -> bool {
-        match self.find('.') {
-            Some(n) => self.split_at(n + 1).1 == ext,
+        match self.split('.').last() {
+            Some(e) => e == ext,
             None => ext.is_empty(),
         }
     }
 
     fn with_extention(&self, ext: &str) -> String {
-        let name = match self.find('.') {
-            Some(n) => self.split_at(n).0,
-            None => self,
+        let parts = self.split('/');
+        let mut path = "".to_owned();
+
+        if parts.clone().count() > 1 {
+            for part in parts.clone().take(parts.clone().count() - 1) {
+                path += part;
+                path += "/";
+            }
+        }
+
+        let file = parts.last().unwrap_or(self);
+
+        let name = match file.chars().rev().position(|x| x == '.') {
+            Some(index) => file.split_at(file.len() - 1 - index).0,
+            None => file,
         };
 
-        name.to_owned() + "." + ext
+        path + name + "." + ext
     }
 }
 
