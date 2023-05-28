@@ -1,0 +1,47 @@
+import { Button, VerticalBox } from "std-widgets.slint";
+
+export component MainWindow inherits Window {
+    callback choose_file(string);
+    VerticalBox {
+        Button {
+            width: 150px;
+            height: 30px;
+            text: "Hamming";
+            clicked => {
+                root.choose_file("hamming");
+            }
+        }
+        Button {
+            width: 150px;
+            height: 30px;
+            text: "Dehamming";
+            clicked => {
+                root.choose_file("dehamming");
+            }
+        }
+        Button {
+            width: 150px;
+            height: 30px;
+            text: "Corrupt";
+            clicked => {
+                root.choose_file("corrupt");
+            }
+        }
+        Button {
+            width: 150px;
+            height: 30px;
+            text: "Huffman";
+            clicked => {
+                root.choose_file("huffman");
+            }
+        }
+        Button {
+            width: 150px;
+            height: 30px;
+            text: "Dehuffman";
+            clicked => {
+                root.choose_file("dehuffman");
+            }
+        }
+    }
+}

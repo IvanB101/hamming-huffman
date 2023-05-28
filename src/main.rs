@@ -1,5 +1,7 @@
 mod ext;
 
+slint::include_modules!();
+
 use ext::FfiError;
 use rfd::FileDialog;
 
@@ -61,54 +63,4 @@ fn main() {
     });
 
     main_window.run().unwrap();
-}
-
-slint::slint! {
-    import { Button, VerticalBox } from "std-widgets.slint";
-
-    export component MainWindow inherits Window {
-        callback choose_file(string);
-        VerticalBox {
-            Button {
-                width: 100px;
-                height: 20px;
-                text: "Hamming";
-                clicked => {
-                    root.choose_file("hamming");
-                }
-            }
-            Button {
-                width: 100px;
-                height: 20px;
-                text: "Dehamming";
-                clicked => {
-                    root.choose_file("dehamming");
-                }
-            }
-            Button {
-                width: 100px;
-                height: 20px;
-                text: "Corrupt";
-                clicked => {
-                    root.choose_file("corrupt");
-                }
-            }
-            Button {
-                width: 100px;
-                height: 20px;
-                text: "Huffman";
-                clicked => {
-                    root.choose_file("huffman");
-                }
-            }
-            Button {
-                width: 100px;
-                height: 20px;
-                text: "Dehuffman";
-                clicked => {
-                    root.choose_file("dehuffman");
-                }
-            }
-        }
-    }
 }
