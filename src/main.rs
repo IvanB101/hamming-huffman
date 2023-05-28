@@ -1,66 +1,114 @@
 mod ext;
 
-use std::process::exit;
+use ext::FfiError;
+use rfd::FileDialog;
 
 fn main() {
-    let args: Vec<String> = std::env::args().skip(1).collect();
+    let main_window = MainWindow::new().unwrap();
 
-    if args.len() < 1 {
-        print_usage();
-    }
+    main_window.on_choose_file(move |operation| {
+        let valid_extentions: Vec<&str>;
 
-    let mut err = Ok(());
+        match operation.as_str() {
+            "hamming" => {
+                valid_extentions = ["txt"].into();
+            }
+            "dehamming" => {
+                valid_extentions = ["HA1", "HA2", "HA3", "HE1", "HE2", "HE3"].into();
+            }
+            "corrupt" => {
+                valid_extentions = ["HA1", "HA2", "HA3"].into();
+            }
+            "huffman" => {
+                valid_extentions = ["txt", "doc", "docx"].into();
+            }
+            "dehuffman" => {
+                valid_extentions = ["huf"].into();
+            }
+            _ => {
+                valid_extentions = Vec::new();
+            }
+        }
 
-    match args[0].as_str() {
-        "ham" => {
-            if args.len() < 3 {
-                print_usage()
-            }
-            match args[2].parse::<u64>() {
-                Ok(number) => err = ext::encode(args[1].to_owned(), number),
-                Err(_) => print_usage(),
-            }
-        }
-        "deham" => {
-            if args.len() < 3 {
-                print_usage()
-            }
-            match args[2].parse::<u64>() {
-                Ok(correct) => err = ext::decode(args[1].to_owned(), correct != 0),
-                Err(_) => print_usage(),
-            }
-        }
-        "huf" => {
-            if args.len() < 2 {
-                print_usage()
-            }
-            err = ext::compress(args[1].to_owned());
-        }
-        "dehuf" => {
-            if args.len() < 2 {
-                print_usage()
-            }
-            err = ext::decompress(args[1].to_owned());
-        }
-        "cor" => {
-            if args.len() < 3 {
-                print_usage()
-            }
-            match args[2].parse::<f64>() {
-                Ok(prob) => err = ext::corrupt(args[1].to_owned(), prob),
-                Err(_) => print_usage(),
-            }
-        }
-        _ => print_usage(),
-    }
+        let path = match FileDialog::new()
+            .add_filter("", valid_extentions.as_ref())
+            .set_directory(".")
+            .pick_file()
+        {
+            Some(path) => path,
+            None => return,
+        };
 
-    match err {
-        Ok(_) => println!("Operacion completada exitosamente"),
-        Err(err) => println!("Error: {}", err),
-    }
+        let file_name = path.as_path().to_str().unwrap().to_string();
+
+        let error = match operation.as_str() {
+            "hamming" => ext::encode(file_name.to_owned(), 32),
+            "dehamming" => ext::decode(file_name.to_owned(), true),
+            "corrupt" => ext::corrupt(file_name.to_owned(), 0.50),
+            "huffman" => ext::compress(file_name.to_owned()),
+            "dehuffman" => ext::decompress(file_name.to_owned()),
+            _ => Err(FfiError {
+                message: "Invalid Operation".to_string(),
+            }),
+        };
+
+        match error {
+            Ok(_) => {}
+            Err(e) => {
+                println!("Error: {}", e);
+            }
+        }
+    });
+
+    main_window.run().unwrap();
 }
 
-fn print_usage() {
-    println!("Uso");
-    exit(1);
+slint::slint! {
+    import { Button, VerticalBox } from "std-widgets.slint";
+
+    export component MainWindow inherits Window {
+        callback choose_file(string);
+        VerticalBox {
+            Button {
+                width: 100px;
+                height: 20px;
+                text: "Hamming";
+                clicked => {
+                    root.choose_file("hamming");
+                }
+            }
+            Button {
+                width: 100px;
+                height: 20px;
+                text: "Dehamming";
+                clicked => {
+                    root.choose_file("dehamming");
+                }
+            }
+            Button {
+                width: 100px;
+                height: 20px;
+                text: "Corrupt";
+                clicked => {
+                    root.choose_file("corrupt");
+                }
+            }
+            Button {
+                width: 100px;
+                height: 20px;
+                text: "Huffman";
+                clicked => {
+                    root.choose_file("huffman");
+                }
+            }
+            Button {
+                width: 100px;
+                height: 20px;
+                text: "Dehuffman";
+                clicked => {
+                    root.choose_file("dehuffman");
+                }
+            }
+        }
+    }
 }
