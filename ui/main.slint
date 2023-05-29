@@ -1,5 +1,4 @@
-import { Button, HorizontalBox , ScrollView} from "std-widgets.slint";
-import { ScrollPane } from "scroll_pane.slint";
+import { Button, HorizontalBox , ScrollView } from "std-widgets.slint";
 
 struct ButtonData {
     text: string,
@@ -29,13 +28,12 @@ export component MainWindow inherits Window {
             }
         }
 
-        VerticalLayout {
-            ScrollView { 
-                height: 300px;
-                Text {
-                    text: "Hello\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nBye";
-                    wrap: word-wrap;
-                }
+        ScrollView { 
+            viewport-height: 500px;
+            height: 300px;
+            Text {
+                text: "Hello\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nBye";
+                wrap: word-wrap;
             }
         }
     }
