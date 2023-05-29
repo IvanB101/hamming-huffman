@@ -1,46 +1,41 @@
-import { Button, VerticalBox } from "std-widgets.slint";
+import { Button, HorizontalBox , ScrollView} from "std-widgets.slint";
+import { ScrollPane } from "scroll_pane.slint";
+
+struct ButtonData {
+    text: string,
+    operation: string,
+}
 
 export component MainWindow inherits Window {
     callback choose_file(string);
-    VerticalBox {
-        Button {
-            width: 150px;
-            height: 30px;
-            text: "Hamming";
-            clicked => {
-                root.choose_file("hamming");
+
+    in property <[ButtonData]> buttons: [
+        {text: "Proteger", operation: "hamming"},
+        {text: "Desproteger", operation: "dehamming"},
+        {text: "Corromper", operation: "corrupt"},
+        {text: "Comprimir", operation: "huffman"},
+        {text: "Descomprimir", operation: "dehuffman"},
+    ];
+
+    VerticalLayout {
+        HorizontalLayout { 
+            for button[i] in buttons : Button {
+                width: 150px;
+                height: 30px;
+                text: button.text;
+                clicked => {
+                    root.choose_file(button.operation);
+                }
             }
         }
-        Button {
-            width: 150px;
-            height: 30px;
-            text: "Dehamming";
-            clicked => {
-                root.choose_file("dehamming");
-            }
-        }
-        Button {
-            width: 150px;
-            height: 30px;
-            text: "Corrupt";
-            clicked => {
-                root.choose_file("corrupt");
-            }
-        }
-        Button {
-            width: 150px;
-            height: 30px;
-            text: "Huffman";
-            clicked => {
-                root.choose_file("huffman");
-            }
-        }
-        Button {
-            width: 150px;
-            height: 30px;
-            text: "Dehuffman";
-            clicked => {
-                root.choose_file("dehuffman");
+
+        VerticalLayout {
+            ScrollView { 
+                height: 300px;
+                Text {
+                    text: "Hello\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nBye";
+                    wrap: word-wrap;
+                }
             }
         }
     }
