@@ -1,4 +1,9 @@
-import { Button, HorizontalBox , ScrollView } from "std-widgets.slint";
+import { Operations } from "operations.slint";
+import { Statistics } from "statistics.slint";
+import { State } from "state.slint";
+import { Button } from "std-widgets.slint";
+
+export { State }
 
 struct ButtonData {
     text: string,
@@ -6,35 +11,32 @@ struct ButtonData {
 }
 
 export component MainWindow inherits Window {
-    callback choose_file(string);
+    private property <string> option;
 
-    in property <[ButtonData]> buttons: [
-        {text: "Proteger", operation: "hamming"},
-        {text: "Desproteger", operation: "dehamming"},
-        {text: "Corromper", operation: "corrupt"},
-        {text: "Comprimir", operation: "huffman"},
-        {text: "Descomprimir", operation: "dehuffman"},
-    ];
+    min-width: 800px;
+    min-height: 500px;
 
     VerticalLayout {
-        HorizontalLayout { 
-            for button[i] in buttons : Button {
+        HorizontalLayout {
+            Button {
                 width: 150px;
                 height: 30px;
-                text: button.text;
+                text: "Operaciones";
                 clicked => {
-                    root.choose_file(button.operation);
+                    option = "ops"
+                }
+            }
+            Button {
+                width: 150px;
+                height: 30px;
+                text: "Estadisticas";
+                clicked => {
+                    option = "stats"
                 }
             }
         }
 
-        ScrollView { 
-            viewport-height: 500px;
-            height: 300px;
-            Text {
-                text: "Hello\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nBye";
-                wrap: word-wrap;
-            }
-        }
+        if option == "ops" : Operations {  }
+        if option == "stats" : Statistics {  }
     }
 }

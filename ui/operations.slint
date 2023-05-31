@@ -1,0 +1,39 @@
+import { Button, HorizontalBox , ScrollView } from "std-widgets.slint";
+import { State } from "state.slint";
+
+struct ButtonData {
+    text: string,
+    operation: string,
+}
+
+export component Operations inherits Rectangle {
+    in property <[ButtonData]> buttons: [
+        {text: "Proteger", operation: "hamming"},
+        {text: "Desproteger", operation: "dehamming"},
+        {text: "Corromper", operation: "corrupt"},
+        {text: "Comprimir", operation: "huffman"},
+        {text: "Descomprimir", operation: "dehuffman"},
+    ];
+
+    VerticalLayout {
+        HorizontalLayout { 
+            for button[i] in buttons : Button {
+                width: 150px;
+                height: 30px;
+                text: button.text;
+                clicked => {
+                    State.choose_file(button.operation);
+                }
+            }
+        }
+
+        ScrollView { 
+            viewport-height: 500px;
+            height: 300px;
+            Text {
+                text: "Hello\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nBye";
+                wrap: word-wrap;
+            }
+        }
+    }
+}
