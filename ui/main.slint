@@ -1,7 +1,7 @@
 import { Operations } from "operations.slint";
 import { Statistics } from "statistics.slint";
 import { State } from "state.slint";
-import { Button } from "std-widgets.slint";
+import { Button , TabWidget} from "std-widgets.slint";
 
 export { State }
 
@@ -11,32 +11,29 @@ struct ButtonData {
 }
 
 export component MainWindow inherits Window {
-    private property <string> option;
+    in-out property <string> error : "" ;
+    in-out property <string> message : "" ;
 
     min-width: 800px;
     min-height: 500px;
 
     VerticalLayout {
-        HorizontalLayout {
-            Button {
-                width: 150px;
-                height: 30px;
-                text: "Operaciones";
-                clicked => {
-                    option = "ops"
-                }
-            }
-            Button {
-                width: 150px;
-                height: 30px;
-                text: "Estadisticas";
-                clicked => {
-                    option = "stats"
-                }
-            }
+        if error != "" : Text {
+            text: error;
+        }
+        if message != "" : Text {
+            text: message;
         }
 
-        if option == "ops" : Operations {  }
-        if option == "stats" : Statistics {  }
+        TabWidget { 
+            Tab {
+                title: "Operaciones";
+                Operations {}
+            }
+            Tab {
+                title: "Estadísticas";
+                Statistics {}
+            }
+        }
     }
 }

@@ -1,39 +1,68 @@
-import { Button, HorizontalBox , ScrollView } from "std-widgets.slint";
+import { Button, HorizontalBox , ScrollView , ComboBox, CheckBox} from "std-widgets.slint";
 import { State } from "state.slint";
 
-struct ButtonData {
-    text: string,
-    operation: string,
+component OpButton inherits Button {
+    width: 150px;
+    height: 30px;
 }
 
 export component Operations inherits Rectangle {
-    in property <[ButtonData]> buttons: [
-        {text: "Proteger", operation: "hamming"},
-        {text: "Desproteger", operation: "dehamming"},
-        {text: "Corromper", operation: "corrupt"},
-        {text: "Comprimir", operation: "huffman"},
-        {text: "Descomprimir", operation: "dehuffman"},
-    ];
-
     VerticalLayout {
-        HorizontalLayout { 
-            for button[i] in buttons : Button {
-                width: 150px;
-                height: 30px;
-                text: button.text;
-                clicked => {
-                    State.choose_file(button.operation);
+        padding: 15px;
+        alignment: space-around;
+
+        HorizontalLayout {
+            alignment: start;
+
+            OpButton {
+                text: "Proteger";
+                clicked => { State.operation("hamming", combo-box.current-value) }
+            }
+            Text {
+                vertical-alignment: center;
+                text: "  Tamaño de bloque: ";
+            }
+            combo-box := ComboBox {
+                width: 100px;
+                current-value: State.block-size;
+                model: ["32", "2048", "65536"];
+                selected => {
+                    State.block-size = self.current-value;
                 }
             }
         }
-
-        ScrollView { 
-            viewport-height: 500px;
-            height: 300px;
-            Text {
-                text: "Hello\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nBye";
-                wrap: word-wrap;
+        HorizontalLayout {
+            alignment: start;
+            OpButton {
+                text: "Desproteger";
+                clicked => { State.operation("dehamming", correct.checked? "true" : "false") }
             }
+            Text {
+                text: "   ";
+            }
+            correct := CheckBox { 
+                text: "  Corrección ";
+                checked: State.correct;
+                toggled => {
+                    State.correct = !State.correct
+                }
+            }
+        }
+        HorizontalLayout {
+            alignment: start;
+            
+            OpButton {
+                text: "Corromper";
+                clicked => { State.operation("corrupt", "") }
+            }
+        }
+        OpButton {
+            text: "Comprimir";
+            clicked => { State.operation("huffman", "") }
+        }
+        OpButton {
+            text: "Descomprimir";
+            clicked => { State.operation("dehuffman", "") }
         }
     }
 }

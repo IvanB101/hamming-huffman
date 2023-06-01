@@ -7,10 +7,11 @@ use rfd::FileDialog;
 
 fn main() {
     let main_window = MainWindow::new().unwrap();
+    let main_window_weak = main_window.as_weak();
 
     main_window
         .global::<State>()
-        .on_choose_file(move |operation| {
+        .on_operation(move |operation, value| {
             let valid_extentions: Vec<&str>;
 
             match operation.as_str() {
@@ -34,35 +35,45 @@ fn main() {
                 }
             }
 
-            let path = match FileDialog::new()
-                .add_filter("", valid_extentions.as_ref())
-                .set_directory(".")
-                .pick_file()
-            {
-                Some(path) => path,
+            let path = match choose_file(valid_extentions) {
+                Some(val) => val,
                 None => return,
             };
 
-            let file_name = path.as_path().to_str().unwrap().to_string();
+            if let Err(e) = match operation.as_str() {
+                "hamming" => {
+                    let block_size = value.parse().unwrap();
 
-            let error = match operation.as_str() {
-                "hamming" => ext::encode(file_name.to_owned(), 32),
-                "dehamming" => ext::decode(file_name.to_owned(), true),
-                "corrupt" => ext::corrupt(file_name.to_owned(), 0.50),
-                "huffman" => ext::compress(file_name.to_owned()),
-                "dehuffman" => ext::decompress(file_name.to_owned()),
+                    ext::encode(path, block_size)
+                }
+                "dehamming" => {
+                    let correct = value.parse().unwrap();
+
+                    ext::decode(path, correct)
+                }
+                "corrupt" => ext::corrupt(path.to_owned(), 0.50),
+                "huffman" => ext::compress(path.to_owned()),
+                "dehuffman" => ext::decompress(path.to_owned()),
                 _ => Err(FfiError {
                     message: "Invalid Operation".to_string(),
                 }),
-            };
-
-            match error {
-                Ok(_) => {}
-                Err(e) => {
-                    println!("Error: {}", e);
-                }
+            } {
+                main_window_weak.unwrap().set_error(e.to_string().into());
             }
         });
 
     main_window.run().unwrap();
+}
+
+fn choose_file(valid_extentions: Vec<&str>) -> Option<String> {
+    Some(
+        FileDialog::new()
+            .add_filter("", valid_extentions.as_ref())
+            .set_directory(".")
+            .pick_file()?
+            .as_path()
+            .to_str()
+            .unwrap()
+            .to_string(),
+    )
 }

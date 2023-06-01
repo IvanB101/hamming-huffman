@@ -1,3 +1,7 @@
 export global State {
+    callback operation(string, string);
     callback choose_file(string);
+
+    in-out property <string> block_size : "32";
+    in-out property <bool> correct : true;
 }

@@ -1,5 +1,16 @@
+import { ScrollView } from "std-widgets.slint";
+
 export component Statistics inherits Rectangle {
     Text {
         text: "Statistics";
+    }
+
+    ScrollView { 
+        viewport-height: 500px;
+        height: 300px;
+        Text {
+            text: "Hello\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nBye";
+            wrap: word-wrap;
+        }
     }
 }
