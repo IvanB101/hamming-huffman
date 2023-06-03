@@ -1,16 +1,37 @@
-import { ScrollView } from "std-widgets.slint";
+import { ScrollView , ListView, Button} from "std-widgets.slint";
+import { State } from "state.slint";
 
 export component Statistics inherits Rectangle {
-    Text {
-        text: "Statistics";
-    }
+    in property <[string]> file_text : ["", "", ""];
 
-    ScrollView { 
-        viewport-height: 500px;
-        height: 300px;
-        Text {
-            text: "Hello\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nBye";
-            wrap: word-wrap;
+    VerticalLayout {
+        padding-top: 15px;
+        spacing: 20px;
+
+        Button { 
+            height: 30px;
+            width: 180px;
+            text: "Seleccionar archivo";
+            clicked => { State.choose-file(); }
+        }
+        ListView { 
+            min-height: 300px;
+            for data in [
+                {text : file-text},
+            ] : VerticalLayout {
+                Text {
+                    text: file-text[0];
+                    wrap: word-wrap;
+                }
+                Text {
+                    text: file-text[1];
+                    wrap: word-wrap;
+                }
+                Text {
+                    text: file-text[2];
+                    wrap: word-wrap;
+                }
+            }
         }
     }
 }

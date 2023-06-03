@@ -1,7 +1,12 @@
 export global State {
-    callback operation(string, string);
-    callback choose_file(string);
+    callback protect(string);
+    callback desprotect(bool);
+    callback corrupt(float);
+    callback compress();
+    callback decompress();
+    callback choose_file();
 
     in-out property <string> block_size : "32";
     in-out property <bool> correct : true;
+    in-out property <float> probability : 0.0 ;
 }

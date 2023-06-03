@@ -7,16 +7,19 @@ component OpButton inherits Button {
 }
 
 export component Operations inherits Rectangle {
+    in-out property <[string]> errors;
+    in-out property <[bool]> inProgress;
+
     VerticalLayout {
         padding: 15px;
         alignment: space-around;
 
-        HorizontalLayout {
+        hamming := HorizontalLayout {
             alignment: start;
 
             OpButton {
                 text: "Proteger";
-                clicked => { State.operation("hamming", combo-box.current-value) }
+                clicked => { State.protect(combo-box.current-value) }
             }
             Text {
                 vertical-alignment: center;
@@ -30,12 +33,15 @@ export component Operations inherits Rectangle {
                     State.block-size = self.current-value;
                 }
             }
+            if errors[0] != "" : Text {
+                text: errors[0];
+            }
         }
-        HorizontalLayout {
+        dehamming := HorizontalLayout {
             alignment: start;
             OpButton {
                 text: "Desproteger";
-                clicked => { State.operation("dehamming", correct.checked? "true" : "false") }
+                clicked => { State.desprotect(State.correct) }
             }
             Text {
                 text: "   ";
@@ -53,16 +59,16 @@ export component Operations inherits Rectangle {
             
             OpButton {
                 text: "Corromper";
-                clicked => { State.operation("corrupt", "") }
+                clicked => { State.corrupt(State.probability) }
             }
         }
         OpButton {
             text: "Comprimir";
-            clicked => { State.operation("huffman", "") }
+            clicked => { State.compress() }
         }
         OpButton {
             text: "Descomprimir";
-            clicked => { State.operation("dehuffman", "") }
+            clicked => { State.decompress() }
         }
     }
 }

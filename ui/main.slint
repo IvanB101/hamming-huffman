@@ -11,29 +11,36 @@ struct ButtonData {
 }
 
 export component MainWindow inherits Window {
-    in-out property <string> error : "" ;
-    in-out property <string> message : "" ;
+    in-out property <[string]> errors : ["", "", "", "", ""];
+    in-out property <[bool]> inProgress : [false, false, false, false, false];
+
+    in-out property <[string]> file-text;
+
+    private property <string> active-tab : "ops";
 
     min-width: 800px;
     min-height: 500px;
 
     VerticalLayout {
-        if error != "" : Text {
-            text: error;
-        }
-        if message != "" : Text {
-            text: message;
-        }
-
-        TabWidget { 
-            Tab {
-                title: "Operaciones";
-                Operations {}
+        HorizontalLayout {
+            alignment: space-around;
+            
+            for data[i] in [
+                {text: "Operaciones", tab: "ops"},
+                {text: "Estadisticas", tab: "stats"},
+            ] : Button {
+                height: 50px;
+                width: 150px;
+                text: data.text;
+                clicked => { active-tab = data.tab; }
             }
-            Tab {
-                title: "Estadísticas";
-                Statistics {}
-            }
+        }
+        if active-tab == "ops" : Operations {
+            errors: errors;
+            inProgress: inProgress;
+        }
+        if active-tab == "stats" : Statistics {
+            file-text: file-text;
         }
     }
 }
