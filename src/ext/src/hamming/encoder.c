@@ -1,7 +1,6 @@
 #include "hamming.h"
 
 #include "../bitarr/bitarr.h"
-#include "./masks.c"
 
 #include <errno.h>
 #include <stdint.h>

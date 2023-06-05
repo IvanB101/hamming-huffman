@@ -1,6 +1,3 @@
-#ifndef MASKS
-#define MASKS
-
 #include "hamming.h"
 
 #include "../bitarr/bitarr.h"
@@ -30,5 +27,3 @@ void *init_masks() {
   }
   return masks;
 }
-
-#endif

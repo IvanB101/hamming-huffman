@@ -1,8 +1,8 @@
-#ifndef CODER
-#define CODER
+#ifndef HAMMING
+#define HAMMING
 
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #define MAX_BLOCK_SIZE 65536
 #define EXPONENT 16
@@ -15,12 +15,13 @@
  * @param block_size size of the block used for encoding
  * @param exponent to which you have to elevate 2 to obtain block_size
  *
- * For correct functioning, block_size has to be a power of 2 
-*/
-char* encode(char *path, char *dest, uint64_t block_size, uint64_t  exponent);
+ * For correct functioning, block_size has to be a power of 2
+ */
+char *encode(char *path, char *dest, uint64_t block_size, uint64_t exponent);
 
-char* decode(char *path, char *dest, uint64_t block_size, uint64_t  exponent, int correct);
+char *decode(char *path, char *dest, uint64_t block_size, uint64_t exponent,
+             int correct);
 
-void* init_masks();
+void *init_masks();
 
-#endif 
+#endif

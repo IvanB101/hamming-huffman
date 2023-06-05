@@ -19,6 +19,15 @@ add_library(c_procedures STATIC
     src/huffman/compress.c
     src/huffman/decompress.c
     src/noise/generator.h
-    src/noise/generator.c)
+    src/noise/generator.c
+    src/buffer/buffer.h
+    src/buffer/buffered_reader.c
+    src/buffer/buffered_writer.c)
 target_include_directories(c_procedures  PUBLIC
     ${CMAKE_CURRENT_LIST_DIR})
+
+add_executable(test
+    src/main.c)
+
+target_link_libraries(test
+    c_procedures)
