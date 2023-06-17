@@ -7,15 +7,12 @@ export component Statistics inherits Rectangle {
     VerticalLayout {
         padding-top: 15px;
         spacing: 20px;
+        
 
-        Button { 
-            height: 30px;
-            width: 180px;
-            text: "Seleccionar archivo";
-            clicked => { State.choose-file(); }
-        }
+        HorizontalLayout {
         ListView { 
-            min-height: 300px;
+            padding-left: 10px;
+            width: 500px;
             for data in [
                 {text : file-text},
             ] : VerticalLayout {
@@ -34,4 +31,5 @@ export component Statistics inherits Rectangle {
             }
         }
     }
+}
 }

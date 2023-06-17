@@ -1,10 +1,10 @@
-import { Operations } from "operations.slint";
+import { proteger, desproteger, corromper, comprimir, descomprimir } from "operations.slint";
 import { Statistics } from "statistics.slint";
 import { State } from "state.slint";
 import { Button , TabWidget} from "std-widgets.slint";
-
+import { Principal } from "principal.slint";
 export { State }
-
+/*
 struct ButtonData {
     text: string,
     operation: string,
@@ -43,4 +43,57 @@ export component MainWindow inherits Window {
             file-text: file-text;
         }
     }
+}
+*/
+
+import { MenuBar
+} from "iot-dashboard.slint";
+
+
+component MainWindow inherits Window {
+
+    title: "Teoria de la Informacion";
+    in-out property <[string]> errors : ["", "", "", "", ""];
+    in-out property <[bool]> inProgress : [false, false, false, false, false];
+
+    in-out property <[string]> file-text;
+
+    in property <string> active-tab : "descomprimir";
+
+    min-width: 900px;
+    min-height: 800px;
+    
+    padding: 0; 
+    VerticalLayout {
+        spacing: 0;
+        HorizontalLayout {
+            height: 100%;
+            spacing: 5px;
+
+            MenuBar {}
+
+            HorizontalLayout {
+                    spacing: 6px;
+
+                    if active-tab == "main" : Principal {
+                    }
+                    if active-tab == "proteger" : proteger {
+                        errors: errors;
+                        inProgress: inProgress;
+                    }
+                    if active-tab == "desproteger" : desproteger {
+                        errors: errors;
+                        inProgress: inProgress;
+                    }
+                    if active-tab == "corromper" : corromper {
+                    }
+                    if active-tab == "comprimir" : comprimir {
+                    }
+                    if active-tab == "descomprimir" : descomprimir {
+                    }
+            }
+        }
+        
+    }
+
 }

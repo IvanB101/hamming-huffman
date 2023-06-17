@@ -1,51 +1,79 @@
 import { Button, HorizontalBox , ScrollView , ComboBox, CheckBox} from "std-widgets.slint";
 import { State } from "state.slint";
+import { Statistics } from "statistics.slint";
+
 
 component OpButton inherits Button {
     width: 150px;
     height: 30px;
 }
 
-export component Operations inherits Rectangle {
+component comp inherits Rectangle{
+    VerticalLayout {
+        width: 100%;
+        height: 100%;
+        
+        HorizontalLayout {
+            alignment: center;
+            spacing: 15px;
+            
+            Statistics {
+            }
+            Statistics {
+            }
+        }
+    }
+
+}
+
+
+export component proteger inherits Rectangle{
+    in-out property <[string]> errors;
+    in-out property <[bool]> inProgress;
+    
+    HorizontalLayout {
+        alignment: center;
+        width: 100%;
+        spacing: 15px;
+        Text {
+            horizontal-alignment: center;
+            text: "  Tamaño de bloque: ";
+        }
+        combo-box := ComboBox {
+            width: 100px;
+            height: 30px;
+            current-value: State.block-size;
+            model: ["32", "2048", "65536"];
+            selected => {
+                State.block-size = self.current-value;
+            }
+        }
+        OpButton {
+            text: "Elegir Archivo";
+            clicked => { State.protect(combo-box.current-value) }
+        }
+        if errors[0] != "" : Text {
+            text: errors[0];
+        }
+    }
+    
+    VerticalLayout {
+        padding: 20px;
+        comp{}
+    } 
+
+}
+
+export component desproteger inherits Rectangle{
     in-out property <[string]> errors;
     in-out property <[bool]> inProgress;
 
-    VerticalLayout {
-        padding: 15px;
-        alignment: space-around;
-
-        hamming := HorizontalLayout {
+    HorizontalLayout {
+        alignment: center;
+        width: 100%;
+        spacing: 15px;
+        VerticalLayout {
             alignment: start;
-
-            OpButton {
-                text: "Proteger";
-                clicked => { State.protect(combo-box.current-value) }
-            }
-            Text {
-                vertical-alignment: center;
-                text: "  Tamaño de bloque: ";
-            }
-            combo-box := ComboBox {
-                width: 100px;
-                current-value: State.block-size;
-                model: ["32", "2048", "65536"];
-                selected => {
-                    State.block-size = self.current-value;
-                }
-            }
-            if errors[0] != "" : Text {
-                text: errors[0];
-            }
-        }
-        dehamming := HorizontalLayout {
-            alignment: start;
-            OpButton {
-                text: "Desproteger";
-                clicked => { State.desprotect(State.correct) }
-            }
-            Text {
-                text: "   ";
-            }
             correct := CheckBox { 
                 text: "  Corrección ";
                 checked: State.correct;
@@ -54,21 +82,63 @@ export component Operations inherits Rectangle {
                 }
             }
         }
-        HorizontalLayout {
-            alignment: start;
-            
-            OpButton {
-                text: "Corromper";
-                clicked => { State.corrupt(State.probability) }
-            }
-        }
+        
         OpButton {
-            text: "Comprimir";
-            clicked => { State.compress() }
-        }
-        OpButton {
-            text: "Descomprimir";
-            clicked => { State.decompress() }
+            text: "Elegir Archivo";
+            clicked => { State.desprotect(State.correct) }
         }
     }
+
+    VerticalLayout {
+        padding: 20px;
+        comp{}
+    } 
+    
 }
+
+export component corromper inherits Rectangle {
+    HorizontalLayout {
+        alignment: center;
+        OpButton {
+            text: "Elegir Archivo";
+            clicked => { State.corrupt(State.probability) }
+        }
+    }
+        
+    VerticalLayout {
+        padding: 20px;
+        comp{}
+    } 
+}
+
+export component comprimir inherits Rectangle{
+    HorizontalLayout {
+        alignment: center;
+        OpButton {
+            text: "Elegir Archivo";
+            clicked => { State.compress() }
+        }
+    }
+
+    VerticalLayout {
+        padding: 20px;
+        comp{}
+    } 
+    
+}
+
+export component descomprimir inherits Rectangle{
+    
+    HorizontalLayout{
+        alignment: center;
+        OpButton {
+        text: "Elegir Archivo";
+        clicked => { State.decompress() }
+    }
+    }
+    VerticalLayout {
+        padding: 20px;
+        comp{}
+    }    
+}
+

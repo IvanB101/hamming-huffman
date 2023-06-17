@@ -30,7 +30,7 @@ pub fn encode(path: String, block_size: u64) -> Result<(), FfiError> {
     let ext;
     let exponent;
 
-    if let Some(index) = valid_sizes.iter().position(|&x| x == block_size) {
+    if let Some(index) = valid_sizes.iter().position(|&x| x == block_size.into()) {
         ext = extentions[index];
         exponent = exponents[index]
     } else {
@@ -44,7 +44,12 @@ pub fn encode(path: String, block_size: u64) -> Result<(), FfiError> {
     let c_dest = CString::new(path.with_extention(ext)).unwrap();
 
     unsafe {
-        err = raw::encode(c_path.as_ptr(), c_dest.as_ptr(), block_size, exponent);
+        err = raw::encode(
+            c_path.as_ptr(),
+            c_dest.as_ptr(),
+            block_size.try_into().unwrap(),
+            exponent.try_into().unwrap(),
+        );
     }
 
     if err.is_null() {
@@ -88,8 +93,8 @@ pub fn decode(path: String, correct: bool) -> Result<(), FfiError> {
         err = raw::decode(
             c_path.as_ptr(),
             c_dest.as_ptr(),
-            block_size,
-            exponent,
+            block_size.try_into().unwrap(),
+            exponent.try_into().unwrap(),
             c_correct,
         );
     }
@@ -139,8 +144,8 @@ pub fn corrupt(path: String, probability: f64) -> Result<(), FfiError> {
         err = raw::corrupt(
             c_path.as_ptr(),
             c_dest.as_ptr(),
-            block_size,
-            exponent,
+            block_size.try_into().unwrap(),
+            exponent.try_into().unwrap(),
             probability,
         );
     }
