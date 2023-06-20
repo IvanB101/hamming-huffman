@@ -3,62 +3,18 @@ import { Statistics } from "statistics.slint";
 import { State } from "state.slint";
 import { Button , TabWidget} from "std-widgets.slint";
 import { Principal } from "principal.slint";
+import { MenuBar } from "menu.slint";
 export { State }
-/*
-struct ButtonData {
-    text: string,
-    operation: string,
-}
-
-export component MainWindow inherits Window {
-    in-out property <[string]> errors : ["", "", "", "", ""];
-    in-out property <[bool]> inProgress : [false, false, false, false, false];
-
-    in-out property <[string]> file-text;
-
-    private property <string> active-tab : "ops";
-
-    min-width: 800px;
-    min-height: 500px;
-
-    VerticalLayout {
-        HorizontalLayout {
-            alignment: space-around;
-            
-            for data[i] in [
-                {text: "Operaciones", tab: "ops"},
-                {text: "Estadisticas", tab: "stats"},
-            ] : Button {
-                height: 50px;
-                width: 150px;
-                text: data.text;
-                clicked => { active-tab = data.tab; }
-            }
-        }
-        if active-tab == "ops" : Operations {
-            errors: errors;
-            inProgress: inProgress;
-        }
-        if active-tab == "stats" : Statistics {
-            file-text: file-text;
-        }
-    }
-}
-*/
-
-import { MenuBar
-} from "iot-dashboard.slint";
-
 
 component MainWindow inherits Window {
-
+    background: rgb(31,31,31);
     title: "Teoria de la Informacion";
     in-out property <[string]> errors : ["", "", "", "", ""];
     in-out property <[bool]> inProgress : [false, false, false, false, false];
 
     in-out property <[string]> file-text;
 
-    in property <string> active-tab : "descomprimir";
+    in-out property <string> active-tab : "Pantalla Principal";
 
     min-width: 900px;
     min-height: 800px;
@@ -70,26 +26,29 @@ component MainWindow inherits Window {
             height: 100%;
             spacing: 5px;
 
-            MenuBar {}
+            MenuBar {
+                pantalla <=> active-tab;
+            }
 
+            
             HorizontalLayout {
                     spacing: 6px;
 
-                    if active-tab == "main" : Principal {
+                    if active-tab == "Pantalla Principal" : Principal {
                     }
-                    if active-tab == "proteger" : proteger {
+                    if active-tab == "Proteger" : proteger {
                         errors: errors;
                         inProgress: inProgress;
                     }
-                    if active-tab == "desproteger" : desproteger {
+                    if active-tab == "Desproteger" : desproteger {
                         errors: errors;
                         inProgress: inProgress;
                     }
-                    if active-tab == "corromper" : corromper {
+                    if active-tab == "Corromper" : corromper {
                     }
-                    if active-tab == "comprimir" : comprimir {
+                    if active-tab == "Comprimir" : comprimir {
                     }
-                    if active-tab == "descomprimir" : descomprimir {
+                    if active-tab == "Descomprimir" : descomprimir {
                     }
             }
         }

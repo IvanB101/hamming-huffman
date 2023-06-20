@@ -3,16 +3,14 @@ import { State } from "state.slint";
 
 export component Statistics inherits Rectangle {
     in property <[string]> file_text : ["", "", ""];
-
     VerticalLayout {
-        padding-top: 15px;
         spacing: 20px;
-        
+        width: 100%;
 
         HorizontalLayout {
         ListView { 
             padding-left: 10px;
-            width: 500px;
+            min-width: 500px;
             for data in [
                 {text : file-text},
             ] : VerticalLayout {

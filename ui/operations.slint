@@ -12,16 +12,20 @@ component comp inherits Rectangle{
     VerticalLayout {
         width: 100%;
         height: 100%;
-        
-        HorizontalLayout {
-            alignment: center;
-            spacing: 15px;
-            
-            Statistics {
-            }
-            Statistics {
-            }
+        padding-top: 20px;
+        spacing: 20px;
+        t:=Text{
+            text: "ORIGINAL";
+            padding-top: 10px;
         }
+        Statistics {}
+        
+        p:=Text{
+            text: "PROCESADO";
+            padding-top: 10px;
+        }
+        Statistics {}
+        
     }
 
 }
@@ -30,11 +34,19 @@ component comp inherits Rectangle{
 export component proteger inherits Rectangle{
     in-out property <[string]> errors;
     in-out property <[bool]> inProgress;
-    
+    HorizontalLayout {
+        padding: 15px;
+        Text {
+            horizontal-alignment: center;
+            text: "Proteger";
+            font-size: 18px;
+        }
+    }
     HorizontalLayout {
         alignment: center;
         width: 100%;
         spacing: 15px;
+        padding-top: 50px;
         Text {
             horizontal-alignment: center;
             text: "  Tamaño de bloque: ";
@@ -58,7 +70,10 @@ export component proteger inherits Rectangle{
     }
     
     VerticalLayout {
-        padding: 20px;
+        padding-top: 80px;
+        padding-bottom: 15px;
+        padding-left: 15px;
+        padding-right: 15px;
         comp{}
     } 
 
@@ -67,11 +82,19 @@ export component proteger inherits Rectangle{
 export component desproteger inherits Rectangle{
     in-out property <[string]> errors;
     in-out property <[bool]> inProgress;
-
+    HorizontalLayout {
+        padding: 15px;
+        Text {
+            horizontal-alignment: center;
+            text: "Desproteger";
+            font-size: 18px;
+        }
+    }
     HorizontalLayout {
         alignment: center;
         width: 100%;
         spacing: 15px;
+        padding-top: 50px;
         VerticalLayout {
             alignment: start;
             correct := CheckBox { 
@@ -90,7 +113,10 @@ export component desproteger inherits Rectangle{
     }
 
     VerticalLayout {
-        padding: 20px;
+        padding-top: 80px;
+        padding-bottom: 15px;
+        padding-left: 15px;
+        padding-right: 15px;
         comp{}
     } 
     
@@ -98,7 +124,16 @@ export component desproteger inherits Rectangle{
 
 export component corromper inherits Rectangle {
     HorizontalLayout {
+        padding: 15px;
+        Text {
+            horizontal-alignment: center;
+            text: "Corromper";
+            font-size: 18px;
+        }
+    }
+    HorizontalLayout {
         alignment: center;
+        padding-top: 50px;
         OpButton {
             text: "Elegir Archivo";
             clicked => { State.corrupt(State.probability) }
@@ -106,14 +141,26 @@ export component corromper inherits Rectangle {
     }
         
     VerticalLayout {
-        padding: 20px;
+        padding-top: 80px;
+        padding-bottom: 15px;
+        padding-left: 15px;
+        padding-right: 15px;
         comp{}
     } 
 }
 
 export component comprimir inherits Rectangle{
     HorizontalLayout {
+        padding: 15px;
+        Text {
+            horizontal-alignment: center;
+            text: "Comprimir";
+            font-size: 18px;
+        }
+    }
+    HorizontalLayout {
         alignment: center;
+        padding-top: 50px;
         OpButton {
             text: "Elegir Archivo";
             clicked => { State.compress() }
@@ -121,23 +168,37 @@ export component comprimir inherits Rectangle{
     }
 
     VerticalLayout {
-        padding: 20px;
+        padding-top: 80px;
+        padding-bottom: 15px;
+        padding-left: 15px;
+        padding-right: 15px;
         comp{}
     } 
     
 }
 
 export component descomprimir inherits Rectangle{
-    
+    HorizontalLayout {
+        padding: 15px;
+        Text {
+            horizontal-alignment: center;
+            text: "Descomprimir";
+            font-size: 18px;
+        }
+    }
     HorizontalLayout{
         alignment: center;
+        padding-top: 50px;
         OpButton {
         text: "Elegir Archivo";
         clicked => { State.decompress() }
     }
     }
     VerticalLayout {
-        padding: 20px;
+        padding-top: 80px;
+        padding-bottom: 15px;
+        padding-left: 15px;
+        padding-right: 15px;
         comp{}
     }    
 }

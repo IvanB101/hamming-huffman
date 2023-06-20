@@ -1,30 +1,23 @@
+import { ListView } from "std-widgets.slint";
 export component Principal inherits Rectangle {
-    GridLayout {
-        padding: 15px;
-        width: 700px;
-        spacing: 20px;
-        
-        Text {
-            row: 0;
-            col: 1;
-            vertical-alignment: center;
-            text: "  Practico de Maquina  ";
-            font-size: 20px;
-        }
-        Text {
-            row: 1;
-            col: 1;
-            vertical-alignment: center;
-            text: "  Hamming y Huffman  ";
-            font-size: 20px;
-        }
-        Text {
-            row: 2;
-            col: 1;
-            vertical-alignment: center;
-            text: "  Brocas Ivan y Loyola Luciana  ";
-            font-size: 20px;
-        }
+    VerticalLayout {
+        height: 100%;
+        width: 100%;
+        spacing: 10px;
+
+        for entry[idx] in [
+                { name: "Trabajo Practico de Maquina"},
+                { name: "Teoria de la informacion"},
+                { name: "Profesor: Silvestri"},
+                { name: "Alumnos: Brocas Ivan y Loyola Luciana"},
+            ] : VerticalLayout{
+                t := Text{
+                    vertical-alignment: center;
+                    horizontal-alignment: center;
+                    text: entry.name;
+                    font-size: 20px;
+                }                
+            }
         
     }
 }
