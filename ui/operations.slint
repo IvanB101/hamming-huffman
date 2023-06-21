@@ -1,4 +1,4 @@
-import { Button, HorizontalBox , ScrollView , ComboBox, CheckBox} from "std-widgets.slint";
+import { Button, HorizontalBox , ScrollView , ComboBox, CheckBox, LineEdit, GroupBox} from "std-widgets.slint";
 import { State } from "state.slint";
 import { Statistics } from "statistics.slint";
 
@@ -125,20 +125,59 @@ export component desproteger inherits Rectangle{
 export component corromper inherits Rectangle {
     HorizontalLayout {
         padding: 15px;
+        alignment: center;
         Text {
-            horizontal-alignment: center;
-            text: "Corromper";
+            text: "Corromper:   ";
+            font-size: 18px;
+        }
+        
+        Text{
+            text: "Ingresar las probabilidades";
             font-size: 18px;
         }
     }
     HorizontalLayout {
+        spacing: 10px;
         alignment: center;
         padding-top: 50px;
-        OpButton {
-            text: "Elegir Archivo";
-            clicked => { State.corrupt(State.probability) }
+        Text{
+            text: "Primer error";
+            font-size: 14px;
         }
-    }
+        p1:=LineEdit {
+            width: 100px;
+            height: 30px;
+            font-size: 14px;
+            text: 1.6;
+            edited => {State.probability1=p1.text.to-float()}
+        }
+        
+        Text{
+            text: "Segundo error";
+            font-size: 14px;
+        }
+        p2:=LineEdit {
+            width: 100px;
+            height: 30px;
+            font-size: 14px;
+            text: 0.0;
+            edited => {State.probability2=p2.text.to-float()}
+        }
+        
+        VerticalLayout {
+            padding: 10px;
+            if(((p1.text.to-float()+p2.text.to-float())>1) || ((p1.text.to-float()+p2.text.to-float())<0)): Text {
+                text: "La suma debe ser menor igual a uno y mayor a cero";
+                font-size: 14px;
+            }
+        }
+         
+        if(((p1.text.to-float()+p2.text.to-float())<=1) && ((p1.text.to-float()+p2.text.to-float())>=0)): OpButton {
+            text: "Elegir Archivo";
+            clicked => { State.corrupt(State.probability1, State.probability2);
+            }
+        }
+    }    
         
     VerticalLayout {
         padding-top: 80px;
