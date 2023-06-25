@@ -1,5 +1,11 @@
-import { proteger, desproteger, corromper, comprimir, descomprimir } from "operations.slint";
-import { Statistics } from "statistics.slint";
+import { Compare } from "./files/compare.slint";
+import { Corrupt } from "./operations/corrupt.slint";
+import { Compress } from "./operations/compress.slint";
+import { Protect } from "./operations/protect.slint";
+import { Desprotect } from "./operations/desprotect.slint";
+import { Decompress } from "./operations/decompress.slint";
+import { Statistics } from "files/statistics.slint";
+import { HuffmanStats, HammingStats } from "./files/statistics.slint";
 import { State } from "state.slint";
 import { Button , TabWidget} from "std-widgets.slint";
 import { Principal } from "principal.slint";
@@ -7,14 +13,18 @@ import { MenuBar } from "menu.slint";
 export { State }
 
 component MainWindow inherits Window {
-    background: rgb(31,31,31);
     title: "Teoria de la Informacion";
     in-out property <[string]> errors : ["", "", "", "", ""];
     in-out property <[bool]> inProgress : [false, false, false, false, false];
 
-    in-out property <[string]> file-text;
+    in-out property <[string]> orig-text;
+    in-out property <[string]> proc-text;
 
     in-out property <string> active-tab : "Pantalla Principal";
+
+    in-out property <[string]> stat : [""];
+    in-out property <[HammingStats]> hamming-stats;
+    in-out property <[HuffmanStats]> huffman-stats;
 
     min-width: 1000px;
     min-height: 800px;
@@ -29,30 +39,34 @@ component MainWindow inherits Window {
             MenuBar {
                 pantalla <=> active-tab;
             }
-
-            
             HorizontalLayout {
-                    spacing: 6px;
+                spacing: 6px;
 
-                    if active-tab == "Pantalla Principal" : Principal {
-                    }
-                    if active-tab == "Proteger" : proteger {
-                        errors: errors;
-                        inProgress: inProgress;
-                    }
-                    if active-tab == "Desproteger" : desproteger {
-                        errors: errors;
-                        inProgress: inProgress;
-                    }
-                    if active-tab == "Corromper" : corromper {
-                    }
-                    if active-tab == "Comprimir" : comprimir {
-                    }
-                    if active-tab == "Descomprimir" : descomprimir {
-                    }
+                if active-tab == "Pantalla Principal" : Principal {}
+
+                if active-tab == "Proteger" : Protect {
+                    errors: errors;
+                    inProgress: inProgress;
+                }
+                if active-tab == "Desproteger" : Desprotect {
+                    errors: errors;
+                    inProgress: inProgress;
+                }
+                if active-tab == "Corromper" : Corrupt {}
+
+                if active-tab == "Comprimir" : Compress {}
+
+                if active-tab == "Descomprimir" : Decompress {}
+
+                if active-tab == "Comparar" : Compare {
+                    file-text: orig-text;
+                }
+                if active-tab == "stats" : Statistics {
+                    stat : stat[0];
+                    hamming-stats : hamming-stats[0];
+                    huffman-stats : huffman-stats[0];
+                }
             }
         }
-        
     }
-
 }

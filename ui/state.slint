@@ -1,10 +1,11 @@
+
 export global State {
     callback protect(string);
     callback desprotect(bool);
     callback corrupt(float, float);
     callback compress();
     callback decompress();
-    callback choose_file();
+    callback choose_file(string);
 
     in-out property <string> block_size : "32";
     in-out property <bool> correct : true;
@@ -12,3 +13,4 @@ export global State {
     in-out property <float> probability2 : 0.0 ;
     in-out property <string> path;
 }
+

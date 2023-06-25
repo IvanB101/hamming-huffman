@@ -1,8 +1,9 @@
-import { ScrollView , ListView, Button} from "std-widgets.slint";
-import { State } from "state.slint";
+import { ScrollView , ListView, Button } from "std-widgets.slint";
+import { State } from "../state.slint";
 
-export component Statistics inherits Rectangle {
+export component ShowFile inherits Rectangle {
     in property <[string]> file_text : ["", "", ""];
+
     VerticalLayout {
         spacing: 20px;
         width: 100%;
@@ -17,14 +18,19 @@ export component Statistics inherits Rectangle {
                 Text {
                     text: file-text[0];
                     wrap: word-wrap;
+                    font-size: 14px; 
                 }
                 Text {
+                    color: red;
                     text: file-text[1];
                     wrap: word-wrap;
+                    font-size: 14px; 
                 }
                 Text {
+                    color: red;
                     text: file-text[2];
                     wrap: word-wrap;
+                    font-size: 14px; 
                 }
             }
         }

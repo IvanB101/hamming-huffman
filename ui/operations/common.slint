@@ -1,0 +1,28 @@
+import { Button } from "std-widgets.slint";
+import { ShowFile } from "../files/show_file.slint";
+
+export component OpButton inherits Button {
+    width: 150px;
+    height: 30px;
+}
+
+export component comp inherits Rectangle{
+    VerticalLayout {
+        width: 100%;
+        height: 100%;
+        padding-top: 20px;
+        spacing: 20px;
+
+        t:=Text{
+            text: "ORIGINAL";
+            padding-top: 10px;
+        }
+        ShowFile {}
+        
+        p:=Text{
+            text: "PROCESADO";
+            padding-top: 10px;
+        }
+        ShowFile {}
+    }
+}

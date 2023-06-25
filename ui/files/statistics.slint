@@ -1,0 +1,70 @@
+import { OpButton } from "../operations/common.slint";
+import { State } from "../state.slint";
+
+export struct HuffmanEntry {
+    orig: string,
+    prob: float,
+    comp: string,
+}
+export struct HammingStats {
+    info-bits: int,
+    filler-bits: int,
+    protection-bits: int,
+}
+export struct HuffmanStats {
+    orig-size: int,
+    comp-size: int,
+    table: [HuffmanEntry],
+}
+
+export component Statistics inherits Rectangle {
+    in-out property <string> stat : "";
+    in-out property <HammingStats> hamming-stats;
+    in-out property <HuffmanStats> huffman-stats;
+
+    VerticalLayout {
+        OpButton {
+            text: "Elegir Archivo";
+            clicked => { State.choose_file("stats") }
+        }
+        if stat == "" : Text {
+            text: "Select a file";
+        }
+        if stat == "hamming" : VerticalLayout {
+            Text {
+                text: "Hamming";
+            }
+            Text {
+                text: "Info bits: " + hamming-stats.info-bits;
+            }
+            Text {
+                text: "Filler bits: " + hamming-stats.filler-bits;
+            }
+            Text {
+                text: "Protection bits: " + hamming-stats.protection-bits;
+            }
+        }
+        if stat == "huffman" : VerticalLayout {
+            Text {
+                text: "Huffman";
+            }
+            Text {
+                text: "Original size: " + huffman-stats.orig-size;
+            }
+            Text {
+                text: "Compressed size: " + huffman-stats.comp-size;
+            }
+            for entry in huffman-stats.table : HorizontalLayout {
+                Text {
+                    text: "Original: " + entry.orig;
+                }
+                Text {
+                    text: "Probability: " + entry.prob;
+                }
+                Text {
+                    text: "Comprimido: " + entry.comp;
+                }
+            }
+        }
+    }
+}

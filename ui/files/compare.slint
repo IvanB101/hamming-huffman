@@ -1,0 +1,17 @@
+import { OpButton } from "../operations/common.slint";
+import { State } from "../state.slint";
+import { ShowFile } from "./show_file.slint";
+
+export component Compare inherits Rectangle {
+    in property <[string]> file-text;
+
+    VerticalLayout {
+        OpButton {
+            text: "Elegir Archivo";
+            clicked => { State.choose_file("show") }
+        }
+        ShowFile {
+            file-text: file-text;
+        }
+    }
+}
