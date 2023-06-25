@@ -3,11 +3,15 @@ mod ext;
 
 slint::include_modules!();
 
-use std::{fs::File, io::Read, rc::Rc};
-
+use buffered::reader::{read_f64, read_u32, read_u64, read_u8};
 use ext::Extention;
 use rfd::FileDialog;
 use slint::{Model, SharedString, VecModel};
+use std::{
+    fs::File,
+    io::{BufReader, Read},
+    rc::Rc,
+};
 
 fn main() {
     let main_window = MainWindow::new().unwrap();
@@ -40,6 +44,10 @@ fn main() {
     let huffman_stats = Rc::new(slint::VecModel::from(default_huffman_stats));
     main_window.set_huffman_stats(huffman_stats.clone().into());
 
+    let default_huffman_table: Vec<HuffmanEntry> = main_window.get_huffman_table().iter().collect();
+    let huffman_table = Rc::new(slint::VecModel::from(default_huffman_table));
+    main_window.set_huffman_table(huffman_table.clone().into());
+
     let errors_copy = errors.clone();
     main_window.global::<State>().on_protect(move |value| {
         handle_protect(value, errors_copy.clone());
@@ -69,11 +77,24 @@ fn main() {
 
     let orig_copy = orig_text.clone();
     let stat_copy = stat.clone();
+    let huffman_copy = huffman_stats.clone();
+    let hamming_copy = hamming_stats.clone();
+    let table_copy = huffman_table.clone();
     main_window
         .global::<State>()
         .on_choose_file(move |operation| match operation.to_string().as_str() {
             "show" => handle_show_file(orig_copy.clone()),
-            "stats" => handle_statistics(stat_copy.clone()),
+            "stats" => {
+                if let Err(e) = handle_statistics(
+                    stat_copy.clone(),
+                    hamming_copy.clone(),
+                    huffman_copy.clone(),
+                    table_copy.clone(),
+                ) {
+                    // TODO handling
+                    println!("{}", e);
+                }
+            }
             _ => return,
         });
 
@@ -176,26 +197,101 @@ fn handle_show_file(orig_text: Rc<VecModel<SharedString>>) {
     }
 }
 
-fn handle_statistics(stat: Rc<VecModel<SharedString>>) {
+fn handle_statistics(
+    stat: Rc<VecModel<SharedString>>,
+    hamming_stats: Rc<VecModel<HammingStats>>,
+    huffman_stats: Rc<VecModel<HuffmanStats>>,
+    huffman_table: Rc<VecModel<HuffmanEntry>>,
+) -> Result<(), std::io::Error> {
+    let block_sizes = [32, 2048, 65526];
+    let exponents = [5, 11, 16];
     let valid_extentions = ["HA1", "HA2", "HA3", "HE1", "HE2", "HE3", "huf"].into();
     let hamming_extentions: Vec<&str> = ["HA1", "HA2", "HA3", "HE1", "HE2", "HE3"].into();
 
     let path = match choose_file(valid_extentions) {
         Some(val) => val,
-        None => return,
+        None => return Ok(()),
     };
 
     let mut new_stat: Vec<SharedString> = Vec::new();
-    if let Some(_) = hamming_extentions
+    if let Some(index) = hamming_extentions
         .iter()
         .position(|&x| path.has_extention(x))
     {
         new_stat.push("hamming".into());
         stat.set_vec(new_stat);
+        let block_size = block_sizes[index % 3];
+        let exponent = exponents[index % 3];
+
+        let mut new_hamming_stats: Vec<HammingStats> = Vec::new();
+
+        let mut file_size: u64 = 0;
+        let mut n_blocks: u64 = 0;
+        let mut reader = BufReader::new(File::open(path)?);
+
+        read_u64(&mut reader, &mut n_blocks)?;
+        read_u64(&mut reader, &mut file_size)?;
+
+        let info_bits = file_size * 8;
+        let protection_bits = n_blocks * exponent;
+        let filler_bits = n_blocks * block_size - info_bits - protection_bits;
+
+        new_hamming_stats.push(HammingStats {
+            filler_bits: filler_bits as i32,
+            info_bits: info_bits as i32,
+            protection_bits: protection_bits as i32,
+        });
+
+        hamming_stats.set_vec(new_hamming_stats);
     } else {
         new_stat.push("huffman".into());
         stat.set_vec(new_stat);
+
+        let mut new_huffman_stats: Vec<HuffmanStats> = Vec::new();
+        let mut new_huffman_table: Vec<HuffmanEntry> = Vec::new();
+
+        let fd = File::open(path)?;
+        let comp_size = fd.metadata()?.len();
+        let mut reader = BufReader::new(fd);
+        let mut distinc: u32 = 0;
+        let mut orig_size: u64 = 0;
+
+        read_u32(&mut reader, &mut distinc)?;
+        println!("Distinct: {}", distinc);
+
+        for _i in 0..distinc {
+            let mut original: u8 = 0;
+            let mut length: u8 = 0;
+            let compressed: String = "hola".into();
+            let mut prob: f64 = 0.0;
+
+            read_u8(&mut reader, &mut original)?;
+            read_u8(&mut reader, &mut length)?;
+            let mut buffer: Vec<u8> = Vec::with_capacity(length.into());
+            reader.read_exact(&mut buffer)?;
+            read_f64(&mut reader, &mut prob)?;
+
+            println!("Length: {}", length);
+
+            new_huffman_table.push(HuffmanEntry {
+                comp: compressed.into(),
+                orig: format!("{} {original:b}", original as char).into(),
+                prob: prob as f32,
+            });
+        }
+
+        read_u64(&mut reader, &mut orig_size)?;
+
+        new_huffman_stats.push(HuffmanStats {
+            comp_size: comp_size as i32,
+            orig_size: orig_size as i32,
+        });
+
+        huffman_stats.set_vec(new_huffman_stats);
+        huffman_table.set_vec(new_huffman_table);
     }
+
+    Ok(())
 }
 
 fn choose_file(valid_extentions: Vec<&str>) -> Option<String> {

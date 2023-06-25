@@ -5,7 +5,7 @@ import { Protect } from "./operations/protect.slint";
 import { Desprotect } from "./operations/desprotect.slint";
 import { Decompress } from "./operations/decompress.slint";
 import { Statistics } from "files/statistics.slint";
-import { HuffmanStats, HammingStats } from "./files/statistics.slint";
+import { HuffmanStats, HammingStats, HuffmanEntry } from "./files/statistics.slint";
 import { State } from "state.slint";
 import { Button , TabWidget} from "std-widgets.slint";
 import { Principal } from "principal.slint";
@@ -20,11 +20,12 @@ component MainWindow inherits Window {
     in-out property <[string]> orig-text;
     in-out property <[string]> proc-text;
 
-    in-out property <string> active-tab : "Pantalla Principal";
-
     in-out property <[string]> stat : [""];
     in-out property <[HammingStats]> hamming-stats;
     in-out property <[HuffmanStats]> huffman-stats;
+    in-out property <[HuffmanEntry]> huffman-table;
+
+    in-out property <string> active-tab : "Pantalla Principal";
 
     min-width: 1000px;
     min-height: 800px;
@@ -65,6 +66,7 @@ component MainWindow inherits Window {
                     stat : stat[0];
                     hamming-stats : hamming-stats[0];
                     huffman-stats : huffman-stats[0];
+                    huffman-table : huffman-table;
                 }
             }
         }

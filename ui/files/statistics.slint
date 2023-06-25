@@ -14,13 +14,13 @@ export struct HammingStats {
 export struct HuffmanStats {
     orig-size: int,
     comp-size: int,
-    table: [HuffmanEntry],
 }
 
 export component Statistics inherits Rectangle {
     in-out property <string> stat : "";
     in-out property <HammingStats> hamming-stats;
     in-out property <HuffmanStats> huffman-stats;
+    in-out property <[HuffmanEntry]> huffman-table;
 
     VerticalLayout {
         OpButton {
@@ -54,7 +54,7 @@ export component Statistics inherits Rectangle {
             Text {
                 text: "Compressed size: " + huffman-stats.comp-size;
             }
-            for entry in huffman-stats.table : HorizontalLayout {
+            for entry in huffman-table : HorizontalLayout {
                 Text {
                     text: "Original: " + entry.orig;
                 }
