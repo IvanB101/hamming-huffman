@@ -1,10 +1,7 @@
-use std::io::BufRead;
+use std::io::{BufRead, Read, Result};
 
-pub fn read_u8<R: BufRead>(reader: &mut R, result: &mut u8) -> std::io::Result<()> {
-    let mut buffer = [0_u8; 1];
-    reader.read_exact(&mut buffer)?;
-    *result = buffer[0];
-    Ok(())
+pub fn read_u8<R: BufRead>(reader: &mut R) -> Result<u8> {
+    Ok(reader.bytes().next().transpose()?.unwrap())
 }
 
 pub fn read_u32<R: BufRead>(reader: &mut R, result: &mut u32) -> std::io::Result<()> {

@@ -1,10 +1,13 @@
 mod buffered;
 mod ext;
+mod hamming;
+mod util;
 
 slint::include_modules!();
 
 use buffered::reader::{read_f64, read_u32, read_u64, read_u8};
 use ext::Extention;
+use hamming::{init_masks, MAX_BLOCK_SIZE, MAX_EXPONENT};
 use rfd::FileDialog;
 use slint::{Model, SharedString, VecModel};
 use std::{
@@ -14,6 +17,7 @@ use std::{
 };
 
 fn main() {
+    let masks = init_masks();
     let main_window = MainWindow::new().unwrap();
 
     let default_errors: Vec<SharedString> = main_window.get_errors().iter().collect();
@@ -50,7 +54,7 @@ fn main() {
 
     let errors_copy = errors.clone();
     main_window.global::<State>().on_protect(move |value| {
-        handle_protect(value, errors_copy.clone());
+        handle_protect(value, errors_copy.clone(), &masks);
     });
 
     let errors_copy = errors.clone();
@@ -101,7 +105,11 @@ fn main() {
     main_window.run().unwrap();
 }
 
-fn handle_protect(value: SharedString, errors: Rc<VecModel<SharedString>>) {
+fn handle_protect(
+    value: SharedString,
+    errors: Rc<VecModel<SharedString>>,
+    masks: &[[u8; MAX_BLOCK_SIZE]; MAX_EXPONENT],
+) {
     let valid_extentions = ["txt"].into();
 
     let path = match choose_file(valid_extentions) {
@@ -111,6 +119,11 @@ fn handle_protect(value: SharedString, errors: Rc<VecModel<SharedString>>) {
 
     let block_size = value.parse().unwrap();
 
+    if let Err(e) = hamming::encoder::encode(&path, block_size as usize, &masks) {
+        println!("Error {}", e);
+    }
+
+    return;
     if let Err(e) = ext::encode(path, block_size) {
         errors.set_row_data(0, e.to_string().into());
     }
@@ -265,8 +278,8 @@ fn handle_statistics(
             let compressed: String = "hola".into();
             let mut prob: f64 = 0.0;
 
-            read_u8(&mut reader, &mut original)?;
-            read_u8(&mut reader, &mut length)?;
+            original = read_u8(&mut reader)?;
+            length = read_u8(&mut reader)?;
             let mut buffer: Vec<u8> = Vec::with_capacity(length.into());
             reader.read_exact(&mut buffer)?;
             read_f64(&mut reader, &mut prob)?;
