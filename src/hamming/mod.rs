@@ -1,5 +1,6 @@
 pub mod decoder;
 pub mod encoder;
+pub mod noise;
 
 use crate::util::bitarr::BitArr;
 

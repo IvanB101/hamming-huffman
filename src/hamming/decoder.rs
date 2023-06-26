@@ -10,8 +10,8 @@ use crate::{
 
 use super::{BLOCK_SIZES, EXPONENTS, MAX_BLOCK_SIZE, MAX_EXPONENT};
 
-const VALID_EXTENTIONS: [&str; 6] = ["HA1", "HA2", "HA3", "HE1", "HE2", "HE3"];
-const EXTENTIONS: [&str; 6] = ["DC1", "DC2", "DC3", "DE1", "DE2", "DE3"];
+pub const VALID_EXTENTIONS: [&str; 6] = ["HA1", "HA2", "HA3", "HE1", "HE2", "HE3"];
+pub const EXTENTIONS: [&str; 6] = ["DC1", "DC2", "DC3", "DE1", "DE2", "DE3"];
 
 pub fn decode(
     path: &str,

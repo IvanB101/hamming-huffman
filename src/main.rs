@@ -110,9 +110,7 @@ fn handle_protect(
     errors: Rc<VecModel<SharedString>>,
     masks: &[[u8; MAX_BLOCK_SIZE]; MAX_EXPONENT],
 ) {
-    let valid_extentions = ["txt"].into();
-
-    let path = match choose_file(valid_extentions) {
+    let path = match choose_file(hamming::encoder::VALID_EXTENTIONS.into()) {
         Some(val) => val,
         None => return,
     };
@@ -129,9 +127,7 @@ fn handle_desprotect(
     errors: Rc<VecModel<SharedString>>,
     masks: &[[u8; MAX_BLOCK_SIZE]; MAX_EXPONENT],
 ) {
-    let valid_extentions = ["HA1", "HA2", "HA3", "HE1", "HE2", "HE3"].into();
-
-    let path = match choose_file(valid_extentions) {
+    let path = match choose_file(hamming::decoder::VALID_EXTENTIONS.into()) {
         Some(val) => val,
         None => return,
     };
@@ -142,14 +138,12 @@ fn handle_desprotect(
 }
 
 fn handle_corrupt(errors: Rc<VecModel<SharedString>>, prob1: f32, prob2: f32) {
-    let valid_extentions = ["HA1", "HA2", "HA3"].into();
-
-    let path = match choose_file(valid_extentions) {
+    let path = match choose_file(hamming::noise::VALID_EXTENTIONS.into()) {
         Some(val) => val,
         None => return,
     };
 
-    if let Err(e) = ext::corrupt(path, prob1.into()) {
+    if let Err(e) = hamming::noise::corrupt(&path, prob1, prob2) {
         errors.set_row_data(2, e.to_string().into());
     }
 }
