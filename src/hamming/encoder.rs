@@ -3,12 +3,10 @@ use crate::util::{bitarr::BitArr, string::Extention};
 use std::fs::File;
 use std::io::{BufReader, BufWriter, Error, ErrorKind, Read, Write};
 
-use super::{MAX_BLOCK_SIZE, MAX_EXPONENT};
+use super::{BLOCK_SIZES, EXPONENTS, MAX_BLOCK_SIZE, MAX_EXPONENT};
 
 pub const VALID_EXTENTIONS: [&str; 1] = ["txt"];
 pub const EXTENTIONS: [&str; 3] = ["HA1", "HA2", "HA3"];
-pub const BLOCK_SIZES: [usize; 3] = [32, 2048, 65536];
-pub const EXPONENTS: [usize; 3] = [5, 11, 16];
 
 pub fn encode(
     path: &str,
@@ -18,11 +16,15 @@ pub fn encode(
     let exponent;
     let extention;
 
+    if let None = VALID_EXTENTIONS.iter().position(|&x| path.has_extention(x)) {
+        return Err(Error::new(ErrorKind::Other, "Invalid extention"));
+    }
+
     if let Some(index) = BLOCK_SIZES.iter().position(|&x| x == block_size) {
         exponent = EXPONENTS[index];
         extention = EXTENTIONS[index];
     } else {
-        return Err(Error::new(ErrorKind::Other, "Invalid extention"));
+        return Err(Error::new(ErrorKind::Other, "Invalid block size"));
     }
 
     let fd = File::open(path)?;
@@ -38,7 +40,7 @@ pub fn encode(
         file_size * 8 / info_bits
     };
 
-    let mut rem_buf: usize = 0;
+    let mut rem_buf: usize = block_size;
     let mut block: Vec<u8> = Vec::with_capacity(block_size_bytes);
     let mut buffer: Vec<u8> = Vec::with_capacity(block_size_bytes);
 
@@ -71,6 +73,11 @@ fn protect(mut block: &mut [u8], exponent: usize, masks: &[[u8; MAX_BLOCK_SIZE];
         }
         pos <<= 1;
     }
+    let par = block.parity();
+    let block_size = block.len() * 8;
+    if par {
+        block.flip_bit(block_size - 1);
+    }
 }
 
 fn pack<'a>(
@@ -78,27 +85,21 @@ fn pack<'a>(
     mut block: &'a mut [u8],
     buffer: &'a mut [u8],
     block_size: usize,
-    rem_buf: usize,
+    offset: usize,
 ) -> Result<usize, std::io::Error> {
     let mut remain = block_size - 2;
-    let mut start_from = block_size - rem_buf;
+    let mut start_from = offset;
     let mut start_to = 2;
     let mut size = 1;
 
     while remain > 0 {
-        println!("Size: {}", size);
-        println!("Start from: {}", start_from);
-        println!("Start to: {}", start_to);
-        println!("Remain: {}", remain);
         if size > block_size - start_from {
-            println!("Leer");
             let mut dif = block_size - start_from;
 
             block.put(&buffer, start_to, start_from, dif);
             start_to += dif;
 
             if let Err(_) = reader.read_exact(buffer) {
-                println!("last");
                 let mut temp = Vec::with_capacity(block_size / 8);
                 reader.read_to_end(&mut temp)?;
 
@@ -112,19 +113,15 @@ fn pack<'a>(
             block.put(&buffer, start_to, start_from, dif);
             start_from += dif;
             start_to += dif + 1;
-
-            remain -= size + 1;
-            size = (size << 1) + 1;
         } else {
-            println!("Normal");
             block.put(&buffer, start_to, start_from, size);
 
-            remain -= size + 1;
             start_from += size;
             start_to += size + 1;
-            size = (size << 1) + 1;
         }
+        remain -= size + 1;
+        size = (size << 1) + 1;
     }
 
-    Ok(block_size - start_from)
+    Ok(start_from)
 }

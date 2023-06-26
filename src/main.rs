@@ -59,7 +59,7 @@ fn main() {
 
     let errors_copy = errors.clone();
     main_window.global::<State>().on_desprotect(move |correct| {
-        handle_desprotect(correct, errors_copy.clone());
+        handle_desprotect(correct, errors_copy.clone(), &masks);
     });
 
     let errors_copy = errors.clone();
@@ -119,17 +119,16 @@ fn handle_protect(
 
     let block_size = value.parse().unwrap();
 
-    if let Err(e) = hamming::encoder::encode(&path, block_size as usize, &masks) {
-        println!("Error {}", e);
-    }
-
-    return;
-    if let Err(e) = ext::encode(path, block_size) {
+    if let Err(e) = hamming::encoder::encode(&path, block_size, &masks) {
         errors.set_row_data(0, e.to_string().into());
     }
 }
 
-fn handle_desprotect(correct: bool, errors: Rc<VecModel<SharedString>>) {
+fn handle_desprotect(
+    correct: bool,
+    errors: Rc<VecModel<SharedString>>,
+    masks: &[[u8; MAX_BLOCK_SIZE]; MAX_EXPONENT],
+) {
     let valid_extentions = ["HA1", "HA2", "HA3", "HE1", "HE2", "HE3"].into();
 
     let path = match choose_file(valid_extentions) {
@@ -137,7 +136,7 @@ fn handle_desprotect(correct: bool, errors: Rc<VecModel<SharedString>>) {
         None => return,
     };
 
-    if let Err(e) = ext::decode(path, correct) {
+    if let Err(e) = hamming::decoder::decode(&path, correct, masks) {
         errors.set_row_data(1, e.to_string().into());
     }
 }
@@ -246,7 +245,7 @@ fn handle_statistics(
         read_u64(&mut reader, &mut file_size)?;
 
         let info_bits = file_size * 8;
-        let protection_bits = n_blocks * exponent;
+        let protection_bits = n_blocks * (exponent + 1);
         let filler_bits = n_blocks * block_size - info_bits - protection_bits;
 
         new_hamming_stats.push(HammingStats {
@@ -273,14 +272,12 @@ fn handle_statistics(
         println!("Distinct: {}", distinc);
 
         for _i in 0..distinc {
-            let mut original: u8 = 0;
-            let mut length: u8 = 0;
             let compressed: String = "hola".into();
             let mut prob: f64 = 0.0;
 
-            original = read_u8(&mut reader)?;
-            length = read_u8(&mut reader)?;
-            let mut buffer: Vec<u8> = Vec::with_capacity(length.into());
+            let original = read_u8(&mut reader)?;
+            let length = read_u8(&mut reader)?;
+            let mut buffer: Vec<u8> = [0; 1].repeat(length as usize);
             reader.read_exact(&mut buffer)?;
             read_f64(&mut reader, &mut prob)?;
 
