@@ -3179,6 +3179,7 @@ dependencies = [
  "rfd",
  "slint",
  "slint-build",
+ "unicode-normalization",
 ]
 
 [[package]]

@@ -23,8 +23,8 @@ pub fn decode(
     let block_size;
 
     if let Some(mut index) = VALID_EXTENTIONS.iter().position(|&x| path.has_extention(x)) {
-        extention = EXTENTIONS[index];
         index %= 3;
+        extention = EXTENTIONS[if corr { index } else { index + 3 }];
         exponent = EXPONENTS[index];
         block_size = BLOCK_SIZES[index];
     } else {
@@ -32,14 +32,14 @@ pub fn decode(
     }
 
     let mut reader = BufReader::new(File::open(&path)?);
-    let mut writer = BufWriter::new(File::create(path.with_extention(extention))?);
+    let mut res_fd = File::create(path.with_extention(extention))?;
+    let mut writer = BufWriter::new(&mut res_fd);
 
     let mut n_blocks: u64 = 0;
     let mut file_size: u64 = 0;
     read_u64(&mut reader, &mut n_blocks)?;
     read_u64(&mut reader, &mut file_size)?;
     let block_size_bytes: usize = block_size / 8;
-    let mut offset: usize = 0;
 
     let mut block: Vec<u8> = Vec::with_capacity(block_size_bytes);
     let mut buffer: Vec<u8> = Vec::with_capacity(block_size_bytes);
@@ -49,6 +49,7 @@ pub fn decode(
         buffer.push(0);
     }
 
+    let mut offset: usize = 0;
     for _i in 0..n_blocks {
         reader.read_exact(&mut block)?;
 
@@ -58,12 +59,10 @@ pub fn decode(
 
         offset = unpack(&mut writer, &mut block, &mut buffer, offset)?;
     }
-    while let Some(val) = buffer.pop() {
-        if val.count_ones() > 0 {
-            break;
-        }
-    }
     writer.write_all(&mut buffer)?;
+    drop(writer);
+
+    res_fd.set_len(file_size)?;
 
     Ok(())
 }
@@ -85,7 +84,7 @@ fn correct(mut block: &mut [u8], exponent: usize, masks: &[[u8; MAX_BLOCK_SIZE];
 }
 
 fn unpack<'a>(
-    writer: &mut BufWriter<File>,
+    writer: &mut BufWriter<&mut File>,
     block: &'a mut [u8],
     mut buffer: &'a mut [u8],
     offset: usize,

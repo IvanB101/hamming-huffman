@@ -1,6 +1,7 @@
 mod buffered;
 mod ext;
 mod hamming;
+mod huffman;
 mod util;
 
 slint::include_modules!();
@@ -87,7 +88,12 @@ fn main() {
     main_window
         .global::<State>()
         .on_choose_file(move |operation| match operation.to_string().as_str() {
-            "show" => handle_show_file(orig_copy.clone()),
+            "show" => {
+                if let Err(e) = handle_show_file(orig_copy.clone()) {
+                    // TODO
+                    println!("{}", e);
+                }
+            }
             "stats" => {
                 if let Err(e) = handle_statistics(
                     stat_copy.clone(),
@@ -138,12 +144,14 @@ fn handle_desprotect(
 }
 
 fn handle_corrupt(errors: Rc<VecModel<SharedString>>, prob1: f32, prob2: f32) {
+    println!("Out: {}, {}", prob1, prob2);
     let path = match choose_file(hamming::noise::VALID_EXTENTIONS.into()) {
         Some(val) => val,
         None => return,
     };
 
-    if let Err(e) = hamming::noise::corrupt(&path, prob1, prob2) {
+    // TODO siempre recibe probabilidades 0 de la GUI
+    if let Err(e) = hamming::noise::corrupt(&path, 0.3, 0.1) {
         errors.set_row_data(2, e.to_string().into());
     }
 }
@@ -174,7 +182,7 @@ fn handle_decompress(errors: Rc<VecModel<SharedString>>) {
     }
 }
 
-fn handle_show_file(orig_text: Rc<VecModel<SharedString>>) {
+fn handle_show_file(orig_text: Rc<VecModel<SharedString>>) -> Result<(), std::io::Error> {
     let valid_extentions = [
         "txt", "doc", "docx", "DE1", "DE2", "DE3", "DC1", "DC2", "DC3",
     ]
@@ -183,7 +191,7 @@ fn handle_show_file(orig_text: Rc<VecModel<SharedString>>) {
 
     let path = match choose_file(valid_extentions) {
         Some(val) => val,
-        None => return,
+        None => return Ok(()),
     };
 
     let mut file = File::open(&path).unwrap();
@@ -192,15 +200,19 @@ fn handle_show_file(orig_text: Rc<VecModel<SharedString>>) {
         // TODO Return Vec<String> with errors
     } else {
         let mut new_file_text: Vec<SharedString> = Vec::new();
-        let mut contents = String::new();
+        let mut buffer = Vec::new();
 
-        file.read_to_string(&mut contents).unwrap();
+        file.read_to_end(&mut buffer)?;
+
+        let contents = String::from_utf8_lossy(&buffer).to_string();
 
         new_file_text.push(contents.into());
         new_file_text.push("Err1".into());
 
         orig_text.set_vec(new_file_text);
     }
+
+    Ok(())
 }
 
 fn handle_statistics(

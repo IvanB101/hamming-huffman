@@ -44,7 +44,6 @@ pub fn corrupt(path: &str, prob1: f32, prob2: f32) -> Result<(), Error> {
 
     for _i in 0..n_blocks {
         reader.read_exact(&mut buffer)?;
-        println!("Read:  {}", buffer.as_mut_slice().to_binary());
 
         let errors: f64 = rng1.gen();
 
@@ -53,7 +52,7 @@ pub fn corrupt(path: &str, prob1: f32, prob2: f32) -> Result<(), Error> {
             buffer
                 .as_mut_slice()
                 .flip_bit((pos * block_size as f64) as usize);
-        } else if errors < prob2 as f64 {
+        } else if errors < (prob2 + prob1) as f64 {
             let pos1: f64 = rng2.gen();
             buffer
                 .as_mut_slice()
@@ -64,7 +63,6 @@ pub fn corrupt(path: &str, prob1: f32, prob2: f32) -> Result<(), Error> {
                 .flip_bit((pos2 * block_size as f64) as usize);
         }
 
-        println!("Write: {}", buffer.as_mut_slice().to_binary());
         writer.write_all(&mut buffer)?;
     }
 
