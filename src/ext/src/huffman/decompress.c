@@ -29,7 +29,6 @@ char *decompress(char *path, char *dest) {
 
   encoding_tree tree;
   fread((void *)&tree.distinct, sizeof(uint32_t), 1, fd);
-  printf("Dist: %d\n", tree.distinct);
   tree.nodes = (char_info *)malloc(tree.distinct * sizeof(char_info));
   for (int i = 0; i < tree.distinct; i++) {
     char_info *entry = &tree.nodes[i];

@@ -18,6 +18,14 @@ use std::{
 };
 
 fn main() {
+    println!("Comprimiento");
+    huffman::compress::compress("./test/test.txt").unwrap();
+
+    println!("Desomprimiento");
+    huffman::decompress::decompress("./test/test.huf").unwrap();
+
+    return;
+
     let masks = init_masks();
     let main_window = MainWindow::new().unwrap();
 
@@ -157,27 +165,23 @@ fn handle_corrupt(errors: Rc<VecModel<SharedString>>, prob1: f32, prob2: f32) {
 }
 
 fn handle_compress(errors: Rc<VecModel<SharedString>>) {
-    let valid_extentions = ["txt", "doc", "docx"].into();
-
-    let path = match choose_file(valid_extentions) {
+    let path = match choose_file(huffman::compress::VALID_EXTENTIONS.into()) {
         Some(val) => val,
         None => return,
     };
 
-    if let Err(e) = ext::compress(path) {
+    if let Err(e) = huffman::compress::compress(&path) {
         errors.set_row_data(3, e.to_string().into());
     }
 }
 
 fn handle_decompress(errors: Rc<VecModel<SharedString>>) {
-    let valid_extentions = ["huf"].into();
-
-    let path = match choose_file(valid_extentions) {
+    let path = match choose_file(huffman::decompress::VALID_EXTENTIONS.into()) {
         Some(val) => val,
         None => return,
     };
 
-    if let Err(e) = ext::decompress(path) {
+    if let Err(e) = huffman::decompress::decompress(&path) {
         errors.set_row_data(4, e.to_string().into());
     }
 }

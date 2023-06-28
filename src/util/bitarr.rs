@@ -18,7 +18,7 @@ pub trait BitArr {
     fn to_binary_len(&self, len: usize) -> String;
 }
 
-impl BitArr for &mut [u8] {
+impl BitArr for [u8] {
     fn set_bit(&mut self, position: usize) {
         let mask: u8 = 1 << (7 - position % 8);
 
