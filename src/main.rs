@@ -1,5 +1,4 @@
 mod buffered;
-mod ext;
 mod hamming;
 mod huffman;
 mod util;
