@@ -5,9 +5,9 @@ mod util;
 
 slint::include_modules!();
 
-use buffered::reader::{read_f64, read_u32, read_u64, read_u8};
-use ext::Extention;
+use buffered::reader::read_u64;
 use hamming::{init_masks, MAX_BLOCK_SIZE, MAX_EXPONENT};
+use huffman::TableEntry;
 use rfd::FileDialog;
 use slint::{Model, SharedString, VecModel};
 use std::{
@@ -15,16 +15,9 @@ use std::{
     io::{BufReader, Read},
     rc::Rc,
 };
+use util::string::Extention;
 
 fn main() {
-    println!("Comprimiento");
-    huffman::compress::compress("./test/test.txt").unwrap();
-
-    println!("Desomprimiento");
-    huffman::decompress::decompress("./test/test.huf").unwrap();
-
-    return;
-
     let masks = init_masks();
     let main_window = MainWindow::new().unwrap();
 
@@ -239,8 +232,8 @@ fn handle_statistics(
     {
         new_stat.push("hamming".into());
         stat.set_vec(new_stat);
-        let block_size = block_sizes[index % 3];
-        let exponent = exponents[index % 3];
+        let block_size = hamming::BLOCK_SIZES[index % 3];
+        let exponent = hamming::EXPONENTS[index % 3];
 
         let mut new_hamming_stats: Vec<HammingStats> = Vec::new();
 
@@ -252,8 +245,8 @@ fn handle_statistics(
         read_u64(&mut reader, &mut file_size)?;
 
         let info_bits = file_size * 8;
-        let protection_bits = n_blocks * (exponent + 1);
-        let filler_bits = n_blocks * block_size - info_bits - protection_bits;
+        let protection_bits = n_blocks * (exponent as u64 + 1);
+        let filler_bits = n_blocks * block_size as u64 - info_bits - protection_bits;
 
         new_hamming_stats.push(HammingStats {
             filler_bits: filler_bits as i32,
@@ -269,11 +262,11 @@ fn handle_statistics(
         let mut new_huffman_stats: Vec<HuffmanStats> = Vec::new();
         let mut new_huffman_table: Vec<HuffmanEntry> = Vec::new();
 
-        let info = huffman::get_info(&path)?;
+        let mut info = huffman::get_info(&path)?;
 
-        while let Some(HuffmanEntry { orig, prob, code }) = info.table {
+        while let Some(TableEntry { orig, prob, code }) = info.table.pop() {
             new_huffman_table.push(HuffmanEntry {
-                orig,
+                orig: orig.into(),
                 code: code.into(),
                 prob,
             });

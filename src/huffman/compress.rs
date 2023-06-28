@@ -8,8 +8,7 @@ use crate::{
         reader::{read_f64, read_u32},
         writer::{write_u32, write_u64},
     },
-    ext::Extention,
-    util::bitarr::BitArr,
+    util::{bitarr::BitArr, string::Extention},
 };
 
 use super::BUFF_SIZE;
@@ -189,7 +188,7 @@ impl Encoder {
         Ok(())
     }
 
-    pub fn read_from_file(reader: &mut BufReader<File>) -> Result<Encoder> {
+    pub fn read_from_file<R: Read>(reader: &mut BufReader<R>) -> Result<Encoder> {
         let mut buffer: Vec<u8> = Vec::new();
         let mut table = Vec::new();
         let mut nodes = Vec::new();

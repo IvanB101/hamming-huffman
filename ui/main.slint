@@ -4,8 +4,8 @@ import { Compress } from "./operations/compress.slint";
 import { Protect } from "./operations/protect.slint";
 import { Desprotect } from "./operations/desprotect.slint";
 import { Decompress } from "./operations/decompress.slint";
-import { Statistics } from "./files/statistics.slint";
-import { HuffmanStats, HammingStats, HuffmanEntry } from "./files/statistics.slint";
+import { Statistics } from "./operations/statistics.slint";
+import { HuffmanStats, HammingStats, HuffmanEntry } from "./operations/statistics.slint";
 import { State } from "state.slint";
 import { Button , TabWidget} from "std-widgets.slint";
 import { Principal } from "principal.slint";
@@ -29,8 +29,8 @@ component MainWindow inherits Window {
 
     min-width: 1000px;
     min-height: 800px;
-    
-    padding: 0; 
+
+    padding: 0;
     VerticalLayout {
         spacing: 0;
         HorizontalLayout {

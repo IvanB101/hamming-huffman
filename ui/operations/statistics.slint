@@ -1,5 +1,5 @@
 import { State } from "../state.slint";
-import { OpButton } from "../operations/common.slint";
+import { OpButton } from "common.slint";
 
 export struct HuffmanEntry {
     orig: string,
@@ -63,7 +63,7 @@ export component Statistics inherits Rectangle {
                     text: "Probability: " + entry.prob;
                 }
                 Text {
-                    text: "Comprimido: " + entry.comp;
+                    text: "Comprimido: " + entry.code;
                 }
             }
         }

@@ -5,8 +5,8 @@ use std::{
     io::{Error, ErrorKind, Result},
 };
 
-use crate::util::bitarr::BitArr;
-use crate::{buffered::reader::read_u64, ext::Extention};
+use crate::buffered::reader::read_u64;
+use crate::util::string::Extention;
 
 use super::compress::Encoder;
 

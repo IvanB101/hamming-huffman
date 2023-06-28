@@ -63,7 +63,7 @@ pub fn encode(
     Ok(())
 }
 
-fn protect(mut block: &mut [u8], exponent: usize, masks: &[[u8; MAX_BLOCK_SIZE]; MAX_EXPONENT]) {
+fn protect(block: &mut [u8], exponent: usize, masks: &[[u8; MAX_BLOCK_SIZE]; MAX_EXPONENT]) {
     let mut pos = 1;
     for i in 0..exponent {
         let flip = block.masked_parity(&masks[i]);
@@ -82,7 +82,7 @@ fn protect(mut block: &mut [u8], exponent: usize, masks: &[[u8; MAX_BLOCK_SIZE];
 
 fn pack<'a>(
     reader: &mut BufReader<File>,
-    mut block: &'a mut [u8],
+    block: &'a mut [u8],
     buffer: &'a mut [u8],
     block_size: usize,
     offset: usize,

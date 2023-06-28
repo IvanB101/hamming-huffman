@@ -1,8 +1,4 @@
-use std::io::{BufRead, Read, Result};
-
-pub fn read_u8<R: BufRead>(reader: &mut R) -> Result<u8> {
-    Ok(reader.bytes().next().transpose()?.unwrap())
-}
+use std::io::BufRead;
 
 pub fn read_u32<R: BufRead>(reader: &mut R, result: &mut u32) -> std::io::Result<()> {
     let mut buffer = [0_u8; std::mem::size_of::<u32>()];

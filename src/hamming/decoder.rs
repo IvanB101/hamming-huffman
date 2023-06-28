@@ -67,7 +67,7 @@ pub fn decode(
     Ok(())
 }
 
-fn correct(mut block: &mut [u8], exponent: usize, masks: &[[u8; MAX_BLOCK_SIZE]; MAX_EXPONENT]) {
+fn correct(block: &mut [u8], exponent: usize, masks: &[[u8; MAX_BLOCK_SIZE]; MAX_EXPONENT]) {
     let mut sindrome: usize = 0;
 
     for i in 0..exponent {

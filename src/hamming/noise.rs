@@ -7,8 +7,7 @@ use rand::Rng;
 
 use crate::{
     buffered::{reader::read_u64, writer::write_u64},
-    ext::Extention,
-    util::bitarr::BitArr,
+    util::{bitarr::BitArr, string::Extention},
 };
 
 use super::BLOCK_SIZES;
