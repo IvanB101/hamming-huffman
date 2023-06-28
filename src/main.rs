@@ -225,8 +225,6 @@ fn handle_statistics(
     huffman_stats: Rc<VecModel<HuffmanStats>>,
     huffman_table: Rc<VecModel<HuffmanEntry>>,
 ) -> Result<(), std::io::Error> {
-    let block_sizes = [32, 2048, 65526];
-    let exponents = [5, 11, 16];
     let valid_extentions = ["HA1", "HA2", "HA3", "HE1", "HE2", "HE3", "huf"].into();
     let hamming_extentions: Vec<&str> = ["HA1", "HA2", "HA3", "HE1", "HE2", "HE3"].into();
 
@@ -272,39 +270,20 @@ fn handle_statistics(
         let mut new_huffman_stats: Vec<HuffmanStats> = Vec::new();
         let mut new_huffman_table: Vec<HuffmanEntry> = Vec::new();
 
-        let fd = File::open(path)?;
-        let comp_size = fd.metadata()?.len();
-        let mut reader = BufReader::new(fd);
-        let mut distinc: u32 = 0;
-        let mut orig_size: u64 = 0;
+        let info = huffman::get_info(&path)?;
 
-        read_u32(&mut reader, &mut distinc)?;
-        println!("Distinct: {}", distinc);
-
-        for _i in 0..distinc {
-            let compressed: String = "hola".into();
-            let mut prob: f64 = 0.0;
-
-            let original = read_u8(&mut reader)?;
-            let length = read_u8(&mut reader)?;
-            let mut buffer: Vec<u8> = [0; 1].repeat(length as usize);
-            reader.read_exact(&mut buffer)?;
-            read_f64(&mut reader, &mut prob)?;
-
-            println!("Length: {}", length);
-
+        while let Some(HuffmanEntry { orig, prob, code }) = info.table {
             new_huffman_table.push(HuffmanEntry {
-                comp: compressed.into(),
-                orig: format!("{} {original:b}", original as char).into(),
-                prob: prob as f32,
+                orig,
+                code: code.into(),
+                prob,
             });
         }
 
-        read_u64(&mut reader, &mut orig_size)?;
-
         new_huffman_stats.push(HuffmanStats {
-            comp_size: comp_size as i32,
-            orig_size: orig_size as i32,
+            comp_size: info.comp_size as i32,
+            orig_size: info.file_size as i32,
+            table_size: info.table_size as i32,
         });
 
         huffman_stats.set_vec(new_huffman_stats);

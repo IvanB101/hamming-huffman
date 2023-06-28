@@ -1,10 +1,10 @@
-import { OpButton } from "../operations/common.slint";
-import { State } from "../state.slint";
+Import { State } from "../state.slint";
+Import { OpButton } from "../operations/common.slint";
 
 export struct HuffmanEntry {
     orig: string,
     prob: float,
-    comp: string,
+    code: string,
 }
 export struct HammingStats {
     info-bits: int,
@@ -14,6 +14,7 @@ export struct HammingStats {
 export struct HuffmanStats {
     orig-size: int,
     comp-size: int,
+    table-size: int,
 }
 
 export component Statistics inherits Rectangle {
