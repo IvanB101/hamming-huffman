@@ -1,11 +1,9 @@
-mod buffered;
 mod hamming;
 mod huffman;
 mod util;
 
 slint::include_modules!();
 
-use buffered::reader::read_u64;
 use hamming::{init_masks, MAX_BLOCK_SIZE, MAX_EXPONENT};
 use huffman::TableEntry;
 use rfd::FileDialog;
@@ -15,7 +13,7 @@ use std::{
     io::{BufReader, Read},
     rc::Rc,
 };
-use util::string::Extention;
+use util::{string::Extention, typed_io::TypedRead};
 
 fn main() {
     let masks = init_masks();
@@ -237,12 +235,9 @@ fn handle_statistics(
 
         let mut new_hamming_stats: Vec<HammingStats> = Vec::new();
 
-        let mut file_size: u64 = 0;
-        let mut n_blocks: u64 = 0;
         let mut reader = BufReader::new(File::open(path)?);
-
-        read_u64(&mut reader, &mut n_blocks)?;
-        read_u64(&mut reader, &mut file_size)?;
+        let n_blocks = reader.read_u64()?;
+        let file_size = reader.read_u64()?;
 
         let info_bits = file_size * 8;
         let protection_bits = n_blocks * (exponent as u64 + 1);

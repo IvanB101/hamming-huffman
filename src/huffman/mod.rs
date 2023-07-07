@@ -6,7 +6,7 @@ use std::{
     io::{BufReader, Result},
 };
 
-use crate::buffered::reader::read_u64;
+use crate::util::typed_io::TypedRead;
 
 use self::compress::Encoder;
 
@@ -26,14 +26,14 @@ pub struct TableEntry {
 }
 
 pub fn get_info(path: &str) -> Result<HuffmanInfo> {
-    let mut file_size = 0;
     let mut table_size: u32 = 0;
     let mut table = Vec::new();
 
     let mut fd = File::open(path)?;
     let size = fd.metadata()?.len();
     let mut reader = BufReader::new(&mut fd);
-    read_u64(&mut reader, &mut file_size)?;
+
+    let file_size = reader.read_u64()?;
     let mut encoder = Encoder::read_from_file(&mut reader)?;
 
     while let (Some((orig, prob)), Some((len, code))) = (encoder.pop_nodes(), encoder.pop_table()) {

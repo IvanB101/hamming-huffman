@@ -5,9 +5,10 @@ use std::{
 
 use rand::Rng;
 
-use crate::{
-    buffered::{reader::read_u64, writer::write_u64},
-    util::{bitarr::BitArr, string::Extention},
+use crate::util::{
+    bitarr::BitArr,
+    string::Extention,
+    typed_io::{TypedRead, TypedWrite},
 };
 
 use super::BLOCK_SIZES;
@@ -29,12 +30,10 @@ pub fn corrupt(path: &str, prob1: f32, prob2: f32) -> Result<(), Error> {
     let mut reader = BufReader::new(File::open(&path)?);
     let mut writer = BufWriter::new(File::create(path.with_extention(extention))?);
 
-    let mut n_blocks: u64 = 0;
-    let mut file_size: u64 = 0;
-    read_u64(&mut reader, &mut n_blocks)?;
-    read_u64(&mut reader, &mut file_size)?;
-    write_u64(&mut writer, &n_blocks)?;
-    write_u64(&mut writer, &file_size)?;
+    let n_blocks = reader.read_u64()?;
+    let file_size = reader.read_u64()?;
+    writer.write_u64(n_blocks)?;
+    writer.write_u64(file_size)?;
 
     let mut buffer = Vec::from([0; 1].repeat(block_size / 8));
     let mut rng1 = rand::thread_rng();

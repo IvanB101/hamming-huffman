@@ -7,6 +7,8 @@ pub trait BitArr {
 
     fn flip_bit(&mut self, position: usize);
 
+    fn check_bit(&self, position: usize) -> bool;
+
     fn put_bits(&mut self, from: &Self, start_to: usize, start_from: usize, size: usize);
 
     fn parity(&self) -> bool;
@@ -35,6 +37,12 @@ impl BitArr for [u8] {
         let mask: u8 = 1 << (7 - position % 8);
 
         self[position / 8] ^= mask;
+    }
+
+    fn check_bit(&self, position: usize) -> bool {
+        let mask: u8 = 1 << (7 - position % 8);
+
+        self[position / 8] & mask != 0
     }
 
     fn put_bits(&mut self, from: &Self, start_to: usize, start_from: usize, size: usize) {

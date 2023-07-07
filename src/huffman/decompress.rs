@@ -5,8 +5,8 @@ use std::{
     io::{Error, ErrorKind, Result},
 };
 
-use crate::buffered::reader::read_u64;
 use crate::util::string::Extention;
+use crate::util::typed_io::TypedRead;
 
 use super::compress::Encoder;
 
@@ -33,15 +33,15 @@ pub fn decompress(path: &str) -> Result<()> {
     let mut res_fd = File::create(path.with_extention(EXTENTION))?;
     let mut writer = BufWriter::new(&mut res_fd);
 
-    let mut file_size = 0;
-    read_u64(&mut reader, &mut file_size)?;
+    let file_size = reader.read_u64()?;
 
-    let tree = DecodingTree::new(Encoder::read_from_file(&mut reader)?)?;
+    let encoder = Encoder::read_from_file(&mut reader)?;
+    let tree = DecodingTree::new(encoder)?;
+
+    let mask = 1 << 7;
 
     let mut anchor = &tree.root;
-    while let Some(Ok(byte)) = (&mut reader).bytes().next() {
-        let mut mask: u8 = 1 << 7;
-
+    while let Some(Ok(mut byte)) = (&mut reader).bytes().next() {
         for _i in 0..8 {
             if let Some(ref node) = anchor {
                 if node.val != 0 {
@@ -64,7 +64,7 @@ pub fn decompress(path: &str) -> Result<()> {
                 println!("Error en decodificacion");
                 break;
             }
-            mask >>= 1;
+            byte <<= 1;
         }
     }
     drop(writer);

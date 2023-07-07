@@ -3,10 +3,7 @@ use std::{
     io::{BufReader, BufWriter, Error, ErrorKind, Read, Write},
 };
 
-use crate::{
-    buffered::reader::read_u64,
-    util::{bitarr::BitArr, string::Extention},
-};
+use crate::util::{bitarr::BitArr, string::Extention, typed_io::TypedRead};
 
 use super::{BLOCK_SIZES, EXPONENTS, MAX_BLOCK_SIZE, MAX_EXPONENT};
 
@@ -35,10 +32,8 @@ pub fn decode(
     let mut res_fd = File::create(path.with_extention(extention))?;
     let mut writer = BufWriter::new(&mut res_fd);
 
-    let mut n_blocks: u64 = 0;
-    let mut file_size: u64 = 0;
-    read_u64(&mut reader, &mut n_blocks)?;
-    read_u64(&mut reader, &mut file_size)?;
+    let n_blocks = reader.read_u64()?;
+    let file_size = reader.read_u64()?;
     let block_size_bytes: usize = block_size / 8;
 
     let mut block: Vec<u8> = Vec::with_capacity(block_size_bytes);
@@ -83,10 +78,10 @@ fn correct(block: &mut [u8], exponent: usize, masks: &[[u8; MAX_BLOCK_SIZE]; MAX
     }
 }
 
-fn unpack<'a>(
-    writer: &mut BufWriter<&mut File>,
+fn unpack<'a, W: Write>(
+    writer: &mut W,
     block: &'a mut [u8],
-    mut buffer: &'a mut [u8],
+    buffer: &'a mut [u8],
     offset: usize,
 ) -> Result<usize, std::io::Error> {
     let block_size = block.len() * 8;
@@ -100,7 +95,7 @@ fn unpack<'a>(
             let mut dif = block_size - start_to;
             buffer.put_bits(&block, start_to, start_from, dif);
 
-            writer.write_all(&mut buffer)?;
+            writer.write_all(buffer)?;
             buffer.into_iter().for_each(|x| *x = 0);
 
             start_to = 0;

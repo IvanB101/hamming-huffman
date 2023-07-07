@@ -3,12 +3,10 @@ use std::{
     io::{BufReader, BufWriter, Error, ErrorKind, Read, Result, Seek, Write},
 };
 
-use crate::{
-    buffered::{
-        reader::{read_f64, read_u32},
-        writer::{write_u32, write_u64},
-    },
-    util::{bitarr::BitArr, string::Extention},
+use crate::util::{
+    bitarr::BitArr,
+    string::Extention,
+    typed_io::{TypedRead, TypedWrite},
 };
 
 use super::BUFF_SIZE;
@@ -45,7 +43,7 @@ pub fn compress(path: &str) -> Result<()> {
 
     let encoder = Encoder::new(&mut reader)?;
 
-    write_u64(&mut writer, &file_size)?;
+    writer.write_u64(file_size)?;
     encoder.write_to_file(&mut writer)?;
 
     let table = encoder.table;
@@ -167,11 +165,11 @@ impl Encoder {
         Ok(Encoder { nodes, table })
     }
 
-    fn write_to_file(&self, writer: &mut BufWriter<File>) -> Result<()> {
+    fn write_to_file<W: Write>(&self, writer: &mut W) -> Result<()> {
         let mut buffer: Vec<u8> = Vec::new();
         let distinct = self.nodes.len();
 
-        write_u32(writer, &(distinct as u32))?;
+        writer.write_u32(distinct as u32)?;
 
         for i in 0..distinct {
             buffer.clear();
@@ -188,14 +186,11 @@ impl Encoder {
         Ok(())
     }
 
-    pub fn read_from_file<R: Read>(reader: &mut BufReader<R>) -> Result<Encoder> {
+    pub fn read_from_file<R: Read>(reader: &mut R) -> Result<Encoder> {
         let mut buffer: Vec<u8> = Vec::new();
         let mut table = Vec::new();
         let mut nodes = Vec::new();
-        let mut prob = 0.0;
-        let mut distinct = 0;
-
-        read_u32(reader, &mut distinct)?;
+        let distinct = reader.read_u32()?;
 
         for _i in 0..distinct {
             buffer.clear();
@@ -203,8 +198,7 @@ impl Encoder {
             reader.read_exact(&mut buffer)?;
             let orig = buffer[0];
             let len = buffer[1];
-
-            read_f64(reader, &mut prob)?;
+            let prob = reader.read_f64()?;
 
             buffer.clear();
             let byte_len = if len % 8 == 0 { len / 8 } else { len / 8 + 1 };

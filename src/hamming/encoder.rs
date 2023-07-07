@@ -1,4 +1,4 @@
-use crate::buffered::writer::write_u64;
+use crate::util::typed_io::TypedWrite;
 use crate::util::{bitarr::BitArr, string::Extention};
 use std::fs::File;
 use std::io::{BufReader, BufWriter, Error, ErrorKind, Read, Write};
@@ -28,19 +28,19 @@ pub fn encode(
     }
 
     let fd = File::open(path)?;
-    let file_size = fd.metadata()?.len() as usize;
+    let file_size = fd.metadata()?.len();
     let mut reader = BufReader::new(fd);
     let mut writer = BufWriter::new(File::create(path.with_extention(extention))?);
 
-    let info_bits: usize = block_size - exponent - 1;
-    let block_size_bytes: usize = block_size / 8;
-    let n_blocks: usize = if (file_size * 8) % (info_bits) != 0 {
-        file_size * 8 / info_bits + 1
+    let info_bits = block_size - exponent - 1;
+    let block_size_bytes = block_size / 8;
+    let n_blocks = if (file_size * 8) % (info_bits as u64) != 0 {
+        file_size * 8 / info_bits as u64 + 1
     } else {
-        file_size * 8 / info_bits
+        file_size * 8 / info_bits as u64
     };
 
-    let mut rem_buf: usize = block_size;
+    let mut rem_buf: usize = block_size as usize;
     let mut block: Vec<u8> = Vec::with_capacity(block_size_bytes);
     let mut buffer: Vec<u8> = Vec::with_capacity(block_size_bytes);
 
@@ -49,8 +49,8 @@ pub fn encode(
         buffer.push(0);
     }
 
-    write_u64(&mut writer, &(n_blocks as u64))?;
-    write_u64(&mut writer, &(file_size as u64))?;
+    writer.write_u64(n_blocks)?;
+    writer.write_u64(file_size)?;
 
     for _i in 0..n_blocks {
         rem_buf = pack(&mut reader, &mut block, &mut buffer, block_size, rem_buf)?;
@@ -80,8 +80,8 @@ fn protect(block: &mut [u8], exponent: usize, masks: &[[u8; MAX_BLOCK_SIZE]; MAX
     }
 }
 
-fn pack<'a>(
-    reader: &mut BufReader<File>,
+fn pack<'a, R: Read>(
+    reader: &mut R,
     block: &'a mut [u8],
     buffer: &'a mut [u8],
     block_size: usize,
