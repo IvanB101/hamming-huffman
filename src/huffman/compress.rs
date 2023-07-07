@@ -54,16 +54,16 @@ pub fn compress(path: &str) -> Result<()> {
 
         if buf_bits - rem_buf < *len as usize {
             let mut dif = buf_bits - rem_buf;
-            buffer.put(code, rem_buf as usize, 0, dif);
+            buffer.put_bits(code, rem_buf as usize, 0, dif);
 
             writer.write_all(&mut buffer)?;
             rem_buf = 0;
 
             dif = *len as usize - dif;
-            buffer.put(code, rem_buf, 0, dif);
+            buffer.put_bits(code, rem_buf, 0, dif);
             rem_buf += dif
         } else {
-            buffer.put(code, rem_buf, 0, *len as usize);
+            buffer.put_bits(code, rem_buf, 0, *len as usize);
 
             rem_buf += *len as usize;
         }

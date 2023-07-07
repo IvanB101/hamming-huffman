@@ -98,7 +98,7 @@ fn unpack<'a>(
     while remain > 0 {
         if size > block_size - start_to {
             let mut dif = block_size - start_to;
-            buffer.put(&block, start_to, start_from, dif);
+            buffer.put_bits(&block, start_to, start_from, dif);
 
             writer.write_all(&mut buffer)?;
             buffer.into_iter().for_each(|x| *x = 0);
@@ -107,12 +107,12 @@ fn unpack<'a>(
             start_from += dif;
 
             dif = size - dif;
-            buffer.put(&block, start_to, start_from, dif);
+            buffer.put_bits(&block, start_to, start_from, dif);
 
             start_from += dif + 1;
             start_to += dif;
         } else {
-            buffer.put(&block, start_to, start_from, size);
+            buffer.put_bits(&block, start_to, start_from, size);
 
             start_from += size + 1;
             start_to += size;

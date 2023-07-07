@@ -96,7 +96,7 @@ fn pack<'a>(
         if size > block_size - start_from {
             let mut dif = block_size - start_from;
 
-            block.put(&buffer, start_to, start_from, dif);
+            block.put_bits(&buffer, start_to, start_from, dif);
             start_to += dif;
 
             if let Err(_) = reader.read_exact(buffer) {
@@ -110,11 +110,11 @@ fn pack<'a>(
             start_from = 0;
             dif = size - dif;
 
-            block.put(&buffer, start_to, start_from, dif);
+            block.put_bits(&buffer, start_to, start_from, dif);
             start_from += dif;
             start_to += dif + 1;
         } else {
-            block.put(&buffer, start_to, start_from, size);
+            block.put_bits(&buffer, start_to, start_from, size);
 
             start_from += size;
             start_to += size + 1;
