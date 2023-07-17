@@ -1,6 +1,6 @@
 use std::{
     fs::File,
-    io::{BufReader, BufWriter, Error, ErrorKind, Read, Result, Seek, Write},
+    io::{BufReader, BufWriter, Error, ErrorKind, Read, Result, Write},
 };
 
 use crate::util::{
@@ -72,7 +72,7 @@ pub fn compress(path: &str) -> Result<()> {
 }
 
 impl Encoder {
-    fn new(reader: &mut BufReader<File>) -> Result<Encoder> {
+    fn new<R: Read>(reader: R) -> Result<Encoder> {
         let mut info_arr: Vec<Vec<CharInfo>> = Vec::new();
         let mut table = Vec::with_capacity(CARD_ORIG);
         let mut counter: Vec<u8> = Vec::from([0; 1].repeat(CARD_ORIG));
