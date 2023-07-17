@@ -18,7 +18,7 @@ pub fn init_masks<'a>() -> [[u8; MAX_BLOCK_SIZE]; MAX_EXPONENT] {
         for k in 0..MAX_BLOCK_SIZE {
             if (k + 1) & m != 0 {
                 let row = &mut masks[i];
-                row.as_mut_slice().set_bit(k);
+                row.set_bit(k);
             }
         }
         m <<= 1;

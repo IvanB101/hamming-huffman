@@ -5,6 +5,7 @@ use std::{
     io::{Error, ErrorKind, Result},
 };
 
+use crate::util::bitarr::BitArr;
 use crate::util::string::Extention;
 use crate::util::typed_io::TypedRead;
 
@@ -38,33 +39,22 @@ pub fn decompress(path: &str) -> Result<()> {
     let encoder = Encoder::read_from_file(&mut reader)?;
     let tree = DecodingTree::new(encoder)?;
 
-    let mask = 1 << 7;
-
     let mut anchor = &tree.root;
-    while let Some(Ok(mut byte)) = (&mut reader).bytes().next() {
-        for _i in 0..8 {
+    for byte in reader.bytes() {
+        for bit in [byte?].iter_bits() {
             if let Some(ref node) = anchor {
                 if node.val != 0 {
                     writer.write_all(&[node.val])?;
                     if let Some(ref node) = &tree.root {
-                        if byte & mask != 0 {
-                            anchor = &node.right;
-                        } else {
-                            anchor = &node.left;
-                        }
+                        anchor = node.get_ref_child(bit);
                     }
                 } else {
-                    if byte & mask != 0 {
-                        anchor = &node.right;
-                    } else {
-                        anchor = &node.left;
-                    }
+                    anchor = node.get_ref_child(bit);
                 }
             } else {
                 println!("Error en decodificacion");
                 break;
             }
-            byte <<= 1;
         }
     }
     drop(writer);
@@ -73,55 +63,61 @@ pub fn decompress(path: &str) -> Result<()> {
     Ok(())
 }
 
-impl DecodingTree {
-    fn new(mut encoder: Encoder) -> Result<DecodingTree> {
-        let mut root = Some(Box::new(Node {
-            val: 0,
+impl Node {
+    fn new(val: u8) -> Node {
+        Node {
+            val,
             right: None,
             left: None,
-        }));
+        }
+    }
+
+    fn get_ref_mut_child<'a>(&'a mut self, val: bool) -> &'a mut Option<Box<Self>> {
+        if val {
+            &mut self.right
+        } else {
+            &mut self.left
+        }
+    }
+
+    fn get_ref_child<'a>(&'a self, val: bool) -> &'a Option<Box<Self>> {
+        if val {
+            &self.right
+        } else {
+            &self.left
+        }
+    }
+}
+
+impl DecodingTree {
+    fn new(mut encoder: Encoder) -> Result<DecodingTree> {
+        let mut root = Some(Box::new(Node::new(0)));
 
         while let (Some((orig, _prob)), Some((len, code))) =
             (encoder.pop_nodes(), encoder.pop_table())
         {
             let mut anchor = &mut root;
-            let mut mask = 1 << 7;
-            for i in 0..(len + 1) {
-                match { anchor } {
+            for bit in code.iter_bits_len(len.into()) {
+                match anchor {
                     &mut Some(ref mut node) => {
-                        anchor = if code[(i / 8) as usize] & (mask) != 0 {
-                            &mut node.right
-                        } else {
-                            &mut node.left
-                        }
+                        anchor = node.get_ref_mut_child(bit);
                     }
                     other => {
-                        *other = Some(Box::new(Node {
-                            val: 0,
-                            right: None,
-                            left: None,
-                        }));
-                        if i == len {
-                            other.as_mut().unwrap().val = orig;
-                            break;
-                        }
+                        *other = Some(Box::new(Node::new(0)));
                         if let &mut Some(ref mut node) = other {
-                            anchor = if code[(i / 8) as usize] & (mask) != 0 {
-                                &mut node.right
-                            } else {
-                                &mut node.left
-                            }
+                            anchor = node.get_ref_mut_child(bit);
                         } else {
                             return Err(Error::new(
                                 ErrorKind::Other,
-                                "Error en construccion de arbol de decodificacion",
+                                "Unable to construct decoding tree",
                             ));
                         }
                     }
                 }
-                mask >>= 1;
             }
+            *anchor = Some(Box::new(Node::new(orig)));
         }
+        println!("{:?}", root);
 
         Ok(DecodingTree { root })
     }

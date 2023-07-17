@@ -1,26 +1,11 @@
+use super::{BitArr, BitIterator, BitIteratorLen};
 use std::cmp::min;
 
-pub trait BitArr {
-    fn set_bit(&mut self, position: usize);
-
-    fn reset_bit(&mut self, position: usize);
-
-    fn flip_bit(&mut self, position: usize);
-
-    fn check_bit(&self, position: usize) -> bool;
-
-    fn put_bits(&mut self, from: &Self, start_to: usize, start_from: usize, size: usize);
-
-    fn parity(&self) -> bool;
-
-    fn masked_parity(&self, mask: &[u8]) -> bool;
-
-    fn to_binary(&self) -> String;
-
-    fn to_binary_len(&self, len: usize) -> String;
-}
-
 impl BitArr for [u8] {
+    fn len(&self) -> usize {
+        self.len()
+    }
+
     fn set_bit(&mut self, position: usize) {
         let mask: u8 = 1 << (7 - position % 8);
 
@@ -120,5 +105,64 @@ impl BitArr for [u8] {
         }
 
         res
+    }
+
+    fn iter_bits(&self) -> super::BitIterator<Self> {
+        BitIterator {
+            arr: self,
+            index: 0,
+            mask: 1 << 7,
+        }
+    }
+
+    fn iter_bits_len(&self, len: usize) -> BitIteratorLen<Self> {
+        BitIteratorLen {
+            arr: self,
+            index: 0,
+            mask: 1 << 7,
+            len,
+            current: 0,
+        }
+    }
+}
+
+impl<'a> Iterator for BitIterator<'a, [u8]> {
+    type Item = bool;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.index == self.arr.len() {
+            return None;
+        }
+
+        let bit = self.arr[self.index] & self.mask != 0;
+
+        self.mask >>= 1;
+        if self.mask == 0 {
+            self.index += 1;
+            self.mask = 1 << 7;
+        }
+
+        Some(bit)
+    }
+}
+
+impl<'a> Iterator for BitIteratorLen<'a, [u8]> {
+    type Item = bool;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.current == self.len {
+            return None;
+        }
+
+        let bit = self.arr[self.index] & self.mask != 0;
+
+        self.mask >>= 1;
+        self.current += 1;
+        if self.mask == 0 {
+            self.index += 1;
+            self.mask = 1 << 7;
+        }
+
+        Some(bit)
     }
 }
