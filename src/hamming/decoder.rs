@@ -10,6 +10,17 @@ use super::{BLOCK_SIZES, EXPONENTS, MAX_BLOCK_SIZE, MAX_EXPONENT};
 pub const VALID_EXTENTIONS: [&str; 6] = ["HA1", "HA2", "HA3", "HE1", "HE2", "HE3"];
 pub const EXTENTIONS: [&str; 6] = ["DC1", "DC2", "DC3", "DE1", "DE2", "DE3"];
 
+/// Takes a protected file, decodes it and writes the result to a new file with the same name
+/// but a different extention
+///
+/// # Arguments
+///
+/// * `path` - A string with the path to the file to decode
+/// * `corr` - A bool indicating wheter to correct while decoding or not
+/// * `masks` - Masks utilized for parity controls
+///
+/// # Errors
+/// The function may error when opening a file or reading or writing in one.
 pub fn decode(
     path: &str,
     corr: bool,
@@ -45,11 +56,17 @@ pub fn decode(
     }
 
     let mut offset: usize = 0;
-    for _i in 0..n_blocks {
+    for i in 0..n_blocks {
         reader.read_exact(&mut block)?;
 
         if corr {
-            correct(&mut block, exponent, masks);
+            match correct(&mut block, exponent, masks) {
+                Ok(_) => {}
+                Err(_) => {
+                    println!("Double error in block {}", i);
+                    // TODO
+                }
+            }
         }
 
         offset = unpack(&mut writer, &mut block, &mut buffer, offset)?;
@@ -62,7 +79,20 @@ pub fn decode(
     Ok(())
 }
 
-fn correct(block: &mut [u8], exponent: usize, masks: &[[u8; MAX_BLOCK_SIZE]; MAX_EXPONENT]) {
+/// Calculates the sindrome of a block and corrects it if there is a single error
+///
+/// # Arguments
+/// * `block` - block of data to correct
+/// * `exponent` -  depends strictly on the size of the block
+/// * `masks` - masks used for parity controls
+///
+/// # Error
+/// An error is reported when a double error is found
+fn correct(
+    block: &mut [u8],
+    exponent: usize,
+    masks: &[[u8; MAX_BLOCK_SIZE]; MAX_EXPONENT],
+) -> Result<(), Error> {
     let mut sindrome: usize = 0;
 
     for i in 0..exponent {
@@ -74,10 +104,22 @@ fn correct(block: &mut [u8], exponent: usize, masks: &[[u8; MAX_BLOCK_SIZE]; MAX
         block.flip_bit(sindrome - 1);
     }
     if !block.parity() && sindrome != 0 {
-        println!("Doble error");
+        return Err(Error::new(ErrorKind::Other, "Doble error"));
     }
+
+    Ok(())
 }
 
+/// Eliminates protections bits from a block
+///
+/// # Arguments
+/// * `writer` - to which the contents of `buffer` are written when full
+/// * `block` - to unpack
+/// * `buffer` - here the informations bits of `block` are copied
+/// * `offset` - remaining information bits in `buffer`
+///
+/// # Errors
+/// The function may error when opening a file or reading or writing in one.
 fn unpack<'a, W: Write>(
     writer: &mut W,
     block: &'a mut [u8],

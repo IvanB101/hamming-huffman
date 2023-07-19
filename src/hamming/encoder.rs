@@ -8,6 +8,17 @@ use super::{BLOCK_SIZES, EXPONENTS, MAX_BLOCK_SIZE, MAX_EXPONENT};
 pub const VALID_EXTENTIONS: [&str; 1] = ["txt"];
 pub const EXTENTIONS: [&str; 3] = ["HA1", "HA2", "HA3"];
 
+/// Takes a file, encodes it and writes the result to a new file with the same name
+/// but a different extention
+///
+/// # Arguments
+///
+/// * `path` - A string with the path to the file to decode
+/// * `block_size` - Size of the blocks to be used
+/// * `masks` - Masks utilized for parity controls
+///
+/// # Errors
+/// The function may error when opening a file or reading or writing in one.
 pub fn encode(
     path: &str,
     block_size: usize,
@@ -63,6 +74,12 @@ pub fn encode(
     Ok(())
 }
 
+/// Does parity controls using masks and sets the protection bits of the block acordingly
+///
+/// # Arguments
+/// * `block` - block of data and protection bits to be protected
+/// * `exponent` - number depending on the size of the block
+/// * `masks` -  masks used for the parity checks
 fn protect(block: &mut [u8], exponent: usize, masks: &[[u8; MAX_BLOCK_SIZE]; MAX_EXPONENT]) {
     let mut pos = 1;
     for i in 0..exponent {
@@ -80,6 +97,17 @@ fn protect(block: &mut [u8], exponent: usize, masks: &[[u8; MAX_BLOCK_SIZE]; MAX
     }
 }
 
+/// Takes bits from `buffer` and puts them in `block` leaving space for the protection bits
+///
+/// # Arguments
+/// * `reader` - reader from which data is read
+/// * `block` - block where the information bits are put
+/// * `buffer` - buffer for data read from reader
+/// * `block_size` - size of the block in bits
+/// * `offset` - remaining information bits in `buffer`
+///
+/// # Errors
+/// The function may error when opening a file or reading or writing in one.
 fn pack<'a, R: Read>(
     reader: &mut R,
     block: &'a mut [u8],

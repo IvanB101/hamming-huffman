@@ -1,5 +1,5 @@
-pub mod compress;
-pub mod decompress;
+pub mod decoder;
+pub mod encoder;
 
 use std::{
     fs::File,
@@ -8,24 +8,24 @@ use std::{
 
 use crate::util::typed_io::TypedRead;
 
-use self::compress::Encoder;
+use self::encoder::Encoder;
 
 const BUFF_SIZE: usize = 1024;
 
 pub struct HuffmanInfo {
-    pub comp_size: u32,
-    pub file_size: u32,
-    pub table_size: u32,
+    pub comp_size: u64,
+    pub file_size: u64,
+    pub table_size: u64,
     pub table: Vec<TableEntry>,
 }
 
 pub struct TableEntry {
     pub orig: char,
-    pub prob: f32,
+    pub prob: f64,
     pub code: String,
 }
 
-pub fn get_info(path: &str) -> Result<HuffmanInfo> {
+pub fn get_stats(path: &str) -> Result<HuffmanInfo> {
     let mut table_size: u32 = 0;
     let mut table = Vec::new();
 
@@ -54,7 +54,7 @@ pub fn get_info(path: &str) -> Result<HuffmanInfo> {
 
         table.push(TableEntry {
             orig: orig as char,
-            prob: prob as f32,
+            prob,
             code: aux,
         })
     }
@@ -62,9 +62,9 @@ pub fn get_info(path: &str) -> Result<HuffmanInfo> {
     let comp_size = size as u32 - table_size;
 
     Ok(HuffmanInfo {
-        comp_size,
-        file_size: file_size as u32,
-        table_size,
+        comp_size: comp_size.into(),
+        file_size,
+        table_size: table_size.into(),
         table,
     })
 }

@@ -7,7 +7,7 @@ mod util;
 fn main() {
     let path = "./test/test.txt";
 
-    huffman::compress::compress(path).unwrap();
+    huffman::encoder::compress(path).unwrap();
 
-    huffman::decompress::decompress(&path.with_extention(huffman::compress::EXTENTION)).unwrap();
+    huffman::decoder::decompress(&path.with_extention(huffman::encoder::EXTENTION)).unwrap();
 }
