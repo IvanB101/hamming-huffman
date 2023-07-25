@@ -9,7 +9,7 @@ use crate::util::bitarr::BitArr;
 use crate::util::string::Extention;
 use crate::util::typed_io::TypedRead;
 
-use super::compress::Encoder;
+use super::encoder::Encoder;
 
 pub const VALID_EXTENTIONS: [&str; 1] = ["huf"];
 const EXTENTION: &str = "dhu";
