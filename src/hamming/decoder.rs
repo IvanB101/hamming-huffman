@@ -5,7 +5,7 @@ use std::{
 
 use crate::util::{bitarr::BitArr, string::Extention, typed_io::TypedRead};
 
-use super::{BLOCK_SIZES, EXPONENTS, MAX_BLOCK_SIZE, MAX_EXPONENT};
+use super::{BLOCK_SIZES, EXPONENTS, MASKS};
 
 pub const VALID_EXTENTIONS: [&str; 6] = ["HA1", "HA2", "HA3", "HE1", "HE2", "HE3"];
 pub const EXTENTIONS: [&str; 6] = ["DC1", "DC2", "DC3", "DE1", "DE2", "DE3"];
@@ -21,11 +21,7 @@ pub const EXTENTIONS: [&str; 6] = ["DC1", "DC2", "DC3", "DE1", "DE2", "DE3"];
 ///
 /// # Errors
 /// The function may error when opening a file or reading or writing in one.
-pub fn decode(
-    path: &str,
-    corr: bool,
-    masks: &[[u8; MAX_BLOCK_SIZE]; MAX_EXPONENT],
-) -> Result<(), Error> {
+pub fn decode(path: &str, corr: bool) -> Result<(), Error> {
     let exponent;
     let extention;
     let block_size;
@@ -60,7 +56,7 @@ pub fn decode(
         reader.read_exact(&mut block)?;
 
         if corr {
-            match correct(&mut block, exponent, masks) {
+            match correct(&mut block, exponent) {
                 Ok(_) => {}
                 Err(_) => {
                     println!("Double error in block {}", i);
@@ -88,15 +84,11 @@ pub fn decode(
 ///
 /// # Error
 /// An error is reported when a double error is found
-fn correct(
-    block: &mut [u8],
-    exponent: usize,
-    masks: &[[u8; MAX_BLOCK_SIZE]; MAX_EXPONENT],
-) -> Result<(), Error> {
+fn correct(block: &mut [u8], exponent: usize) -> Result<(), Error> {
     let mut sindrome: usize = 0;
 
     for i in 0..exponent {
-        if block.masked_parity(&masks[i]) {
+        if block.masked_parity(&MASKS[i]) {
             sindrome |= (1 as usize) << i;
         }
     }

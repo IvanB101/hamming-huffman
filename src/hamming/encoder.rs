@@ -3,7 +3,7 @@ use crate::util::{bitarr::BitArr, string::Extention};
 use std::fs::File;
 use std::io::{BufReader, BufWriter, Error, ErrorKind, Read, Write};
 
-use super::{BLOCK_SIZES, EXPONENTS, MAX_BLOCK_SIZE, MAX_EXPONENT};
+use super::{BLOCK_SIZES, EXPONENTS, MASKS};
 
 pub const VALID_EXTENTIONS: [&str; 1] = ["txt"];
 pub const EXTENTIONS: [&str; 3] = ["HA1", "HA2", "HA3"];
@@ -15,15 +15,10 @@ pub const EXTENTIONS: [&str; 3] = ["HA1", "HA2", "HA3"];
 ///
 /// * `path` - A string with the path to the file to decode
 /// * `block_size` - Size of the blocks to be used
-/// * `masks` - Masks utilized for parity controls
 ///
 /// # Errors
 /// The function may error when opening a file or reading or writing in one.
-pub fn encode(
-    path: &str,
-    block_size: usize,
-    masks: &[[u8; MAX_BLOCK_SIZE]; MAX_EXPONENT],
-) -> Result<(), Error> {
+pub fn encode(path: &str, block_size: usize) -> Result<(), Error> {
     let exponent;
     let extention;
 
@@ -66,7 +61,7 @@ pub fn encode(
     for _i in 0..n_blocks {
         rem_buf = pack(&mut reader, &mut block, &mut buffer, block_size, rem_buf)?;
 
-        protect(&mut block, exponent, masks);
+        protect(&mut block, exponent);
 
         writer.write_all(&mut block)?;
     }
@@ -80,10 +75,10 @@ pub fn encode(
 /// * `block` - block of data and protection bits to be protected
 /// * `exponent` - number depending on the size of the block
 /// * `masks` -  masks used for the parity checks
-fn protect(block: &mut [u8], exponent: usize, masks: &[[u8; MAX_BLOCK_SIZE]; MAX_EXPONENT]) {
+fn protect(block: &mut [u8], exponent: usize) {
     let mut pos = 1;
     for i in 0..exponent {
-        let flip = block.masked_parity(&masks[i]);
+        let flip = block.masked_parity(&MASKS[i]);
 
         if flip {
             block.flip_bit(pos - 1);

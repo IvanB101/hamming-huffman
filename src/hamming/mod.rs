@@ -9,8 +9,10 @@ use crate::util::{bitarr::BitArr, string::Extention};
 pub const BLOCK_SIZES: [usize; 3] = [32, 2048, 65536];
 pub const EXPONENTS: [usize; 3] = [5, 11, 16];
 
-pub const MAX_BLOCK_SIZE: usize = 65536;
-pub const MAX_EXPONENT: usize = 16;
+const MAX_BLOCK_SIZE: usize = 65536;
+const MAX_EXPONENT: usize = 16;
+
+const MASKS: [[u8; MAX_BLOCK_SIZE / 8]; MAX_EXPONENT] = init_masks();
 
 pub struct HammingStats {
     orig_size: u64,
@@ -38,18 +40,22 @@ pub fn get_stats(path: &str) -> Result<()> {
     }
 }
 
-pub fn init_masks<'a>() -> [[u8; MAX_BLOCK_SIZE]; MAX_EXPONENT] {
-    let mut masks = [[0 as u8; MAX_BLOCK_SIZE]; MAX_EXPONENT];
+pub const fn init_masks<'a>() -> [[u8; MAX_BLOCK_SIZE / 8]; MAX_EXPONENT] {
+    let mut masks = [[0 as u8; MAX_BLOCK_SIZE / 8]; MAX_EXPONENT];
 
     let mut m = 1;
-    for i in 0..MAX_EXPONENT {
-        for k in 0..MAX_BLOCK_SIZE {
+    let mut i = 0;
+    let mut k = 0;
+    while i < MAX_EXPONENT {
+        while k < MAX_BLOCK_SIZE {
             if (k + 1) & m != 0 {
-                let row = &mut masks[i];
-                row.set_bit(k);
+                masks[i][k / 8] |= 1 << 7 - k % 8;
             }
+            k += 1;
         }
+
         m <<= 1;
+        i += 1;
     }
 
     masks
