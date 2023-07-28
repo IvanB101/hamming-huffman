@@ -251,4 +251,4 @@ macro_rules! iter_len_impl {
     };
 }
 
-bounded_impl!(u8, 8, 127);
+bounded_impl!(u8, 8, 255);
