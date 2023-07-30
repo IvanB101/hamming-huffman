@@ -15,28 +15,80 @@ pub struct BitIteratorLen<'a, T: BitArr + ?Sized> {
 }
 
 pub trait BitArr {
+    /// Returns the number of elements of the collection
     fn len(&self) -> usize;
 
+    /// Set a bit to one
+    ///
+    /// # Arguments
+    ///
+    /// * `position` - position of the bit to set
     fn set_bit(&mut self, position: usize);
 
+    /// Reset a bit to zero
+    ///
+    /// # Arguments
+    ///
+    /// * `position` - position of the bit to reset
     fn reset_bit(&mut self, position: usize);
 
+    /// Flips the value of a bit
+    ///
+    /// # Arguments
+    ///
+    /// * `position` - position of the bit to flip
     fn flip_bit(&mut self, position: usize);
 
+    /// Checks if a bit is one
+    ///
+    /// # Arguments
+    ///
+    /// * `position` - position of the bit to check
     fn check_bit(&self, position: usize) -> bool;
 
+    /// Overwrites bits in the array taken from another bit array
+    ///
+    /// # Arguments
+    ///
+    /// * `from` - array of bits from which bits are taken
+    /// * `start_to` - starting position to which bits are put
+    /// * `start_from` - starting position from which bits are taken
+    /// * `size` - amount of bits to overwrite
     fn put_bits(&mut self, from: &Self, start_to: usize, start_from: usize, size: usize);
 
+    /// Checks the parity of the array of bits
+    ///
+    /// Returns true if the amount of bits set to 1 is uneven
     fn parity(&self) -> bool;
 
+    /// Checks the parity of the array of bits, using a mask to select which bits are taken into
+    /// acount
+    ///
+    /// # Arguments
+    ///
+    /// * `mask` - mask used to select the bits to be counted
+    ///
+    /// Returns true if the amount of bits set to 1 is uneven
     fn masked_parity(&self, mask: &[u8]) -> bool;
 
+    /// Returns a binary representation of the array of bits
     fn to_binary(&self) -> String;
 
+    /// Returns a binary representation of the first `len` bits of the array of bits
+    ///
+    /// # Arguments
+    ///
+    /// * `len` - number of bits to represent
     fn to_binary_len(&self, len: usize) -> String;
 
+    /// Returns an iterator over the bits of the array
     fn iter_bits(&self) -> BitIterator<Self>;
 
+    /// Returns an iterator over the first `len` bits of the array
+    ///
+    /// # Arguments
+    ///
+    /// * `len` - number of bits to iterate over
     fn iter_bits_len(&self, len: usize) -> BitIteratorLen<Self>;
 }
 
