@@ -3,11 +3,7 @@ use std::{
     io::{BufReader, BufWriter, Error, ErrorKind, Read, Result, Seek, Write},
 };
 
-use crate::util::{
-    bitarr::BitArr,
-    string::Extention,
-    typed_io::{TypedRead, TypedWrite},
-};
+use crate::util::{bitarr::BitArr, string::Extention, typed_io::TypedWrite};
 
 use super::BUFF_SIZE;
 
@@ -16,14 +12,14 @@ pub const EXTENTION: &str = "huf";
 const CARD_ORIG: usize = 128;
 
 #[derive(Default, Clone, Debug)]
-pub struct CharInfo {
+struct CharInfo {
     orig: u8,
     code: Vec<bool>,
     prob: f64,
 }
 
-pub struct Encoder {
-    nodes: Vec<(u8, f64)>,
+struct Encoder {
+    distinct: u32,
     table: Vec<(u8, Vec<u8>)>,
 }
 
@@ -44,7 +40,7 @@ pub fn compress(path: &str) -> Result<()> {
     let encoder = Encoder::new(&mut reader)?;
 
     writer.write_u64(file_size)?;
-    encoder.write_to_file(&mut writer)?;
+    encoder.write(&mut writer)?;
 
     let table = encoder.table;
     while let Some(Ok(byte)) = (&mut reader).bytes().next() {
@@ -139,17 +135,15 @@ impl Encoder {
         }
 
         for _i in 0..CARD_ORIG {
-            table.push((Default::default(), Default::default()));
+            table.push((0, Vec::new()));
         }
 
-        let mut nodes = Vec::with_capacity(distinct as usize);
         for i in 0..distinct {
             let entry = &info_arr[0][i as usize];
 
-            nodes.push((entry.orig, entry.prob));
-
             let mut code: Vec<u8> = Vec::new();
             let length = entry.code.len();
+
             for i in 0..length {
                 if i % 8 == 0 {
                     code.push(0);
@@ -162,64 +156,30 @@ impl Encoder {
             table[entry.orig as usize] = (length as u8, code);
         }
 
-        Ok(Encoder { nodes, table })
+        Ok(Encoder { table, distinct })
     }
 
-    fn write_to_file<W: Write>(&self, writer: &mut W) -> Result<()> {
+    fn write<W: Write>(&self, writer: &mut W) -> Result<()> {
         let mut buffer: Vec<u8> = Vec::new();
-        let distinct = self.nodes.len();
 
-        writer.write_u32(distinct as u32)?;
+        writer.write_u32(self.distinct as u32)?;
 
-        for i in 0..distinct {
+        for i in 0..self.table.len() {
+            let entry = &self.table[i];
+
+            if entry.1.is_empty() {
+                continue;
+            }
+
             buffer.clear();
-            let (orig, prob) = self.nodes[i];
-            let (len, code) = &self.table[orig as usize];
+            let (len, code) = &entry;
 
-            buffer.push(orig);
+            buffer.push(i as u8);
             buffer.push(*len);
-            buffer.extend_from_slice(&prob.to_le_bytes());
             buffer.extend_from_slice(&code);
             writer.write_all(&mut buffer)?;
         }
 
         Ok(())
-    }
-
-    pub fn read_from_file<R: Read>(reader: &mut R) -> Result<Encoder> {
-        let mut buffer: Vec<u8> = Vec::new();
-        let mut table = Vec::new();
-        let mut nodes = Vec::new();
-        let distinct = reader.read_u32()?;
-
-        for _i in 0..distinct {
-            buffer.clear();
-            buffer.extend_from_slice(&[0, 0]);
-            reader.read_exact(&mut buffer)?;
-            let orig = buffer[0];
-            let len = buffer[1];
-            let prob = reader.read_f64()?;
-
-            buffer.clear();
-            let byte_len = if len % 8 == 0 { len / 8 } else { len / 8 + 1 };
-            for _i in 0..byte_len {
-                buffer.push(0);
-            }
-
-            reader.read_exact(&mut buffer)?;
-            let code = buffer.clone();
-            nodes.push((orig, prob));
-            table.push((len, code));
-        }
-
-        Ok(Encoder { nodes, table })
-    }
-
-    pub fn pop_nodes(&mut self) -> Option<(u8, f64)> {
-        self.nodes.pop()
-    }
-
-    pub fn pop_table(&mut self) -> Option<(u8, Vec<u8>)> {
-        self.table.pop()
     }
 }

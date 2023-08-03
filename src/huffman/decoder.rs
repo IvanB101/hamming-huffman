@@ -10,8 +10,6 @@ use crate::util::bitarr::BitArr;
 use crate::util::string::Extention;
 use crate::util::typed_io::TypedRead;
 
-use super::encoder::Encoder;
-
 pub const VALID_EXTENTIONS: [&str; 1] = ["huf"];
 const EXTENTION: &str = "dhu";
 
@@ -44,8 +42,7 @@ pub fn decompress(path: &str) -> Result<(), Error> {
 
     let file_size = reader.read_u64()?;
 
-    let encoder = Encoder::read_from_file(&mut reader)?;
-    let tree = DecodingTree::new(encoder)?;
+    let tree = DecodingTree::new(&mut reader)?;
 
     let mut error_bytes = Vec::new();
 
@@ -110,14 +107,31 @@ impl Node {
 }
 
 impl DecodingTree {
-    fn new(mut encoder: Encoder) -> Result<DecodingTree, Error> {
+    fn new<R: Read>(mut reader: R) -> Result<DecodingTree, Error> {
         let mut root = Some(Box::new(Node::new(0)));
+        let mut buffer: Vec<u8> = Vec::new();
 
-        while let (Some((orig, _prob)), Some((len, code))) =
-            (encoder.pop_nodes(), encoder.pop_table())
-        {
+        let distinct = reader.read_u32()?;
+
+        for _i in 0..distinct {
+            // Reading info
+            buffer.clear();
+            buffer.extend_from_slice(&[0, 0]);
+            reader.read_exact(&mut buffer)?;
+            let orig = buffer[0];
+            let len = buffer[1];
+
+            buffer.clear();
+            let byte_len = if len % 8 == 0 { len / 8 } else { len / 8 + 1 };
+            for _i in 0..byte_len {
+                buffer.push(0);
+            }
+
+            reader.read_exact(&mut buffer)?;
+
+            // Generating corresponding tree nodes
             let mut anchor = &mut root;
-            for bit in code.iter_bits_len(len.into()) {
+            for bit in buffer.iter_bits_len(len.into()) {
                 match anchor {
                     &mut Some(ref mut node) => {
                         anchor = node.get_ref_mut_child(bit);
