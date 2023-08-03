@@ -4,7 +4,7 @@ pub mod noise;
 
 use std::io::Result;
 
-use crate::util::{bitarr::BitArr, string::Extention};
+use crate::util::string::Extention;
 
 pub const BLOCK_SIZES: [usize; 3] = [32, 2048, 65536];
 pub const EXPONENTS: [usize; 3] = [5, 11, 16];

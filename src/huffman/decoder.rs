@@ -2,8 +2,9 @@ use std::io::{BufReader, Write};
 use std::io::{BufWriter, Read};
 use std::{
     fs::File,
-    io::{Error, ErrorKind, Result},
+    io::{Error, ErrorKind},
 };
+use thiserror::Error;
 
 use crate::util::bitarr::BitArr;
 use crate::util::string::Extention;
@@ -25,7 +26,14 @@ struct DecodingTree {
     root: Option<Box<Node>>,
 }
 
-pub fn decompress(path: &str) -> Result<()> {
+#[derive(Error, Debug)]
+#[error("{message:}")]
+pub struct HuffmanError {
+    message: String,
+    error_bytes: Vec<u64>,
+}
+
+pub fn decompress(path: &str) -> Result<(), Error> {
     if let None = VALID_EXTENTIONS.iter().position(|&x| path.has_extention(x)) {
         return Err(Error::new(ErrorKind::Other, "Invalid extention"));
     }
@@ -39,8 +47,10 @@ pub fn decompress(path: &str) -> Result<()> {
     let encoder = Encoder::read_from_file(&mut reader)?;
     let tree = DecodingTree::new(encoder)?;
 
+    let mut error_bytes = Vec::new();
+
     let mut anchor = &tree.root;
-    for byte in reader.bytes() {
+    for (byte, index) in reader.bytes().zip(0..) {
         for bit in [byte?].iter_bits() {
             if let Some(ref node) = anchor {
                 if node.val != 0 {
@@ -52,13 +62,23 @@ pub fn decompress(path: &str) -> Result<()> {
                     anchor = node.get_ref_child(bit);
                 }
             } else {
-                println!("Error en decodificacion");
+                error_bytes.push(index);
                 break;
             }
         }
     }
     drop(writer);
     res_fd.set_len(file_size)?;
+
+    if error_bytes.len() > 0 {
+        return Err(Error::new(
+            ErrorKind::Other,
+            HuffmanError {
+                message: "Decoding Error".into(),
+                error_bytes,
+            },
+        ));
+    }
 
     Ok(())
 }
@@ -90,7 +110,7 @@ impl Node {
 }
 
 impl DecodingTree {
-    fn new(mut encoder: Encoder) -> Result<DecodingTree> {
+    fn new(mut encoder: Encoder) -> Result<DecodingTree, Error> {
         let mut root = Some(Box::new(Node::new(0)));
 
         while let (Some((orig, _prob)), Some((len, code))) =
