@@ -1,7 +1,12 @@
 pub mod decoder;
 pub mod encoder;
 
-use std::io::{Read, Result, Seek};
+use std::{
+    fs::File,
+    io::{BufRead, BufReader, Read, Result, Seek},
+};
+
+use crate::util::string::Extention;
 
 const BUFF_SIZE: usize = 1024;
 const CARD_ORIG: usize = 128;
@@ -76,4 +81,26 @@ fn get_probs<R: Read + Seek>(mut reader: R) -> Result<Vec<(u8, f64)>> {
 
     reader.rewind()?;
     Ok(probs)
+}
+
+#[test]
+fn integration_test() {
+    let path = "./test/test.txt";
+    let compressed = &path.with_extention(encoder::EXTENTION);
+    let decompressed = &path.with_extention(decoder::EXTENTION);
+    let mut orig_buf = Vec::new();
+    let mut decomp_buf = Vec::new();
+
+    encoder::compress(path).expect("Error encoding");
+
+    decoder::decompress(compressed).expect("Error decoding");
+
+    BufReader::new(File::open(path).expect("Error opening file"))
+        .read_to_end(&mut orig_buf)
+        .expect("Error reading file");
+    BufReader::new(File::open(decompressed).expect("Error opening file"))
+        .read_to_end(&mut decomp_buf)
+        .expect("Error reading file");
+
+    assert_eq!(orig_buf, decomp_buf);
 }

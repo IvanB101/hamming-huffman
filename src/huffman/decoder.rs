@@ -11,7 +11,7 @@ use crate::util::string::Extention;
 use crate::util::typed_io::TypedRead;
 
 pub const VALID_EXTENTIONS: [&str; 1] = ["huf"];
-const EXTENTION: &str = "dhu";
+pub(super) const EXTENTION: &str = "dhu";
 
 #[derive(Debug)]
 struct Node {
