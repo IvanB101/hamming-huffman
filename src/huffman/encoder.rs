@@ -7,7 +7,7 @@ use std::{
 
 use crate::util::{bitarr::BitArr, string::Extention, typed_io::TypedWrite};
 
-use super::{get_probs, BUFF_SIZE};
+use super::{get_char_info, BUFF_SIZE};
 
 pub const VALID_EXTENTIONS: [&str; 3] = ["txt", "doc", "docx"];
 pub const EXTENTION: &str = "huf";
@@ -63,12 +63,9 @@ pub fn compress(path: &str) -> Result<()> {
 
 impl Encoder {
     fn new<R: Read + Seek>(reader: R) -> Result<Encoder> {
-        let mut info_arr: Vec<Vec<CharInfo>> = Vec::from([Vec::new()]);
         let mut table = Vec::with_capacity(CARD_ORIG);
 
-        for (orig, prob) in get_probs(reader)? {
-            info_arr[0].push(CharInfo::new_char(orig, prob));
-        }
+        let mut info_arr: Vec<Vec<CharInfo>> = Vec::from([get_char_info(reader)?]);
         let distinct = info_arr[0].len() as u32;
 
         info_arr[0].sort_by(|x, y| x.prob.partial_cmp(&y.prob).expect("Invalid probability"));
@@ -78,7 +75,7 @@ impl Encoder {
             .expect("Error generating new encoding")
             .as_slice()
         {
-            let mut level = Vec::new();
+            let mut level = Vec::with_capacity(rest.len() + 1);
             let merged = first.merge(second);
 
             let mut passed = false;
@@ -135,21 +132,9 @@ impl Encoder {
         }
 
         for i in 0..distinct {
-            let entry = &info_arr[0][i as usize];
+            let CharInfo { orig, code, .. } = &info_arr[0][i as usize];
 
-            let mut code: Vec<u8> = Vec::new();
-            let length = entry.code.len();
-
-            for i in 0..length {
-                if i % 8 == 0 {
-                    code.push(0);
-                }
-                if entry.code[i] {
-                    code.as_mut_slice().set_bit(i);
-                }
-            }
-
-            table[entry.orig as usize] = (length as u8, code);
+            table[*orig as usize] = (code.len() as u8, bool_to_u8_vec(code));
         }
 
         Ok(Encoder { table, distinct })
@@ -178,4 +163,19 @@ impl Encoder {
 
         Ok(())
     }
+}
+
+fn bool_to_u8_vec(vec: &Vec<bool>) -> Vec<u8> {
+    let mut res: Vec<u8> = Vec::new();
+
+    for i in 0..vec.len() {
+        if i % 8 == 0 {
+            res.push(0);
+        }
+        if vec[i] {
+            res.set_bit(i);
+        }
+    }
+
+    res
 }

@@ -61,9 +61,9 @@ pub fn get_stats(path: &str) -> Result<HuffmanInfo> {
     todo!()
 }
 
-fn get_probs<R: Read + Seek>(mut reader: R) -> Result<Vec<(u8, f64)>> {
+fn get_char_info<R: Read + Seek>(mut reader: R) -> Result<Vec<CharInfo>> {
     let mut ocurrencies = [0 as u64; CARD_ORIG];
-    let mut probs = Vec::new();
+    let mut info = Vec::new();
     let mut counter: u64 = 0;
 
     for byte in (&mut reader).bytes() {
@@ -75,12 +75,16 @@ fn get_probs<R: Read + Seek>(mut reader: R) -> Result<Vec<(u8, f64)>> {
 
     for i in 0..CARD_ORIG {
         if ocurrencies[i] != 0 {
-            probs.push((i as u8, ocurrencies[i] as f64 / counter as f64))
+            info.push(CharInfo {
+                orig: i as u8,
+                code: Vec::new(),
+                prob: ocurrencies[i] as f64 / counter as f64,
+            })
         }
     }
 
     reader.rewind()?;
-    Ok(probs)
+    Ok(info)
 }
 
 #[test]
