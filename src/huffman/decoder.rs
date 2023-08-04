@@ -109,49 +109,44 @@ impl Node {
 impl DecodingTree {
     fn new<R: Read>(mut reader: R) -> Result<DecodingTree, Error> {
         let mut root = Some(Box::new(Node::new(0)));
-        let mut buffer: Vec<u8> = Vec::new();
+        let mut buffer = [0 as u8; 2];
+        let mut code: Vec<u8> = Vec::new();
 
         let distinct = reader.read_u32()?;
 
         for _i in 0..distinct {
             // Reading info
-            buffer.clear();
-            buffer.extend_from_slice(&[0, 0]);
             reader.read_exact(&mut buffer)?;
-            let orig = buffer[0];
-            let len = buffer[1];
+            let [orig, len] = buffer;
 
-            buffer.clear();
+            code.clear();
             let byte_len = if len % 8 == 0 { len / 8 } else { len / 8 + 1 };
             for _i in 0..byte_len {
-                buffer.push(0);
+                code.push(0);
             }
-
-            reader.read_exact(&mut buffer)?;
+            reader.read_exact(&mut code)?;
 
             // Generating corresponding tree nodes
             let mut anchor = &mut root;
-            for bit in buffer.iter_bits_len(len.into()) {
+            for bit in code.iter_bits_len(len.into()) {
                 match anchor {
                     &mut Some(ref mut node) => {
                         anchor = node.get_ref_mut_child(bit);
                     }
                     other => {
                         *other = Some(Box::new(Node::new(0)));
-                        if let &mut Some(ref mut node) = other {
-                            anchor = node.get_ref_mut_child(bit);
-                        } else {
+                        let &mut Some(ref mut node) = other else {
                             return Err(Error::new(
                                 ErrorKind::Other,
                                 "Unable to construct decoding tree",
                             ));
-                        }
+                        };
+                        anchor = node.get_ref_mut_child(bit);
                     }
                 }
             }
             *anchor = Some(Box::new(Node::new(orig)));
         }
-        println!("{:?}", root);
 
         Ok(DecodingTree { root })
     }

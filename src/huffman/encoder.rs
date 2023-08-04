@@ -1,3 +1,5 @@
+use crate::huffman::CharInfo;
+use crate::huffman::CARD_ORIG;
 use std::{
     fs::File,
     io::{BufReader, BufWriter, Error, ErrorKind, Read, Result, Seek, Write},
@@ -5,18 +7,10 @@ use std::{
 
 use crate::util::{bitarr::BitArr, string::Extention, typed_io::TypedWrite};
 
-use super::BUFF_SIZE;
+use super::{get_probs, BUFF_SIZE};
 
 pub const VALID_EXTENTIONS: [&str; 3] = ["txt", "doc", "docx"];
 pub const EXTENTION: &str = "huf";
-const CARD_ORIG: usize = 128;
-
-#[derive(Default, Clone, Debug)]
-struct CharInfo {
-    orig: u8,
-    code: Vec<bool>,
-    prob: f64,
-}
 
 struct Encoder {
     distinct: u32,
@@ -68,68 +62,70 @@ pub fn compress(path: &str) -> Result<()> {
 }
 
 impl Encoder {
-    fn new<R: Read + Seek>(mut reader: R) -> Result<Encoder> {
-        let mut info_arr: Vec<Vec<CharInfo>> = Vec::new();
+    fn new<R: Read + Seek>(reader: R) -> Result<Encoder> {
+        let mut info_arr: Vec<Vec<CharInfo>> = Vec::from([Vec::new()]);
         let mut table = Vec::with_capacity(CARD_ORIG);
-        let mut counter: Vec<u8> = Vec::from([0; 1].repeat(CARD_ORIG));
-        let mut distinct: u32 = 0;
 
-        while let Some(Ok(val)) = (&mut reader).bytes().next() {
-            if counter[val as usize] == 0 {
-                distinct += 1;
-            }
-            counter[val as usize] += 1;
+        for (orig, prob) in get_probs(reader)? {
+            info_arr[0].push(CharInfo::new_char(orig, prob));
         }
-        reader.rewind()?;
+        let distinct = info_arr[0].len() as u32;
 
-        info_arr.push(Vec::new());
-        for i in 0..CARD_ORIG {
-            if counter[i] != 0 {
-                info_arr[0].push(CharInfo {
-                    orig: i as u8,
-                    code: Vec::new(),
-                    prob: (counter[i] as f64) / (distinct as f64),
-                })
+        info_arr[0].sort_by(|x, y| x.prob.partial_cmp(&y.prob).expect("Invalid probability"));
+
+        while let [first, second, rest @ ..] = &mut info_arr
+            .last()
+            .expect("Error generating new encoding")
+            .as_slice()
+        {
+            let mut level = Vec::new();
+            let merged = first.merge(second);
+
+            let mut passed = false;
+            for char_info in rest {
+                if !passed && char_info.prob > merged.prob {
+                    level.push(merged.clone());
+                    passed = true;
+                }
+                level.push(CharInfo::new(char_info.prob));
             }
-        }
-        info_arr[0].sort_by(|x, y| x.prob.partial_cmp(&y.prob).unwrap());
-
-        for i in (2..=(distinct - 1)).rev() {
-            let mut level = Vec::with_capacity(i as usize);
-            let prev_lev = &mut info_arr.last().unwrap();
-
-            level.push(CharInfo {
-                orig: 1,
-                code: Vec::new(),
-                prob: prev_lev[0].prob + prev_lev[1].prob,
-            });
-
-            for k in 2..prev_lev.len() {
-                let mut temp = prev_lev[k].clone();
-                temp.orig = 0;
-                level.push(temp);
+            if !passed {
+                level.push(merged);
             }
-            level.sort_by(|x, y| x.prob.partial_cmp(&y.prob).unwrap());
-
             info_arr.push(level);
         }
+        info_arr.pop();
 
-        info_arr.last_mut().unwrap()[0].code.push(false);
-        info_arr.last_mut().unwrap()[1].code.push(true);
+        if let [ref mut first, ref mut second] = info_arr
+            .last_mut()
+            .expect("Error generating new encoding")
+            .as_mut_slice()
+        {
+            first.code.push(false);
+            second.code.push(true);
+        }
+
         for _i in 2..distinct {
             let mut last = info_arr.pop().unwrap();
-            let current = info_arr.last_mut().unwrap();
+            if let [ref mut first, ref mut second, ref mut rest @ ..] = info_arr
+                .last_mut()
+                .expect("Error generating new encoding")
+                .as_mut_slice()
+            {
+                let mut rest_iter = rest.iter_mut().rev();
 
-            let mut k = last.len();
-            while let Some(val) = last.pop() {
-                if val.orig == 1 {
-                    current[0].code = val.code.clone();
-                    current[0].code.push(false);
-                    current[1].code = val.code;
-                    current[1].code.push(true);
-                } else {
-                    current[k].code = val.code;
-                    k -= 1;
+                while let Some(val) = last.pop() {
+                    if val.orig == 1 {
+                        first.code = val.code.clone();
+                        first.code.push(false);
+                        second.code = val.code;
+                        second.code.push(true);
+                    } else {
+                        rest_iter
+                            .next()
+                            .expect("Error generating new encoding")
+                            .code = val.code;
+                    }
                 }
             }
         }
