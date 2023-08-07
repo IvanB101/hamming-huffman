@@ -1,4 +1,5 @@
 use crate::util::typed_io::TypedWrite;
+use crate::util::CeilDiv;
 use crate::util::{bitarr::BitArr, string::Extention};
 use std::fs::File;
 use std::io::{BufReader, BufWriter, Error, ErrorKind, Read, Write};
@@ -40,11 +41,7 @@ pub fn encode(path: &str, block_size: usize) -> Result<(), Error> {
 
     let info_bits = block_size - exponent - 1;
     let block_size_bytes = block_size / 8;
-    let n_blocks = if (file_size * 8) % (info_bits as u64) != 0 {
-        file_size * 8 / info_bits as u64 + 1
-    } else {
-        file_size * 8 / info_bits as u64
-    };
+    let n_blocks = (file_size * 8).ceil_div(info_bits as u64);
 
     let mut rem_buf: usize = block_size as usize;
     let mut block: Vec<u8> = Vec::with_capacity(block_size_bytes);

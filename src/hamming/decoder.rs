@@ -2,6 +2,7 @@ use std::{
     fs::File,
     io::{BufReader, BufWriter, Error, ErrorKind, Read, Write},
 };
+use thiserror::Error;
 
 use crate::util::{bitarr::BitArr, string::Extention, typed_io::TypedRead};
 
@@ -9,6 +10,13 @@ use super::{BLOCK_SIZES, EXPONENTS, MASKS};
 
 pub const VALID_EXTENTIONS: [&str; 6] = ["HA1", "HA2", "HA3", "HE1", "HE2", "HE3"];
 pub const EXTENTIONS: [&str; 6] = ["DC1", "DC2", "DC3", "DE1", "DE2", "DE3"];
+
+#[derive(Error, Debug)]
+#[error("{message:}")]
+pub struct HammingError {
+    message: String,
+    error_blocks: Vec<u64>,
+}
 
 /// Takes a protected file, decodes it and writes the result to a new file with the same name
 /// but a different extention
@@ -51,17 +59,15 @@ pub fn decode(path: &str, corr: bool) -> Result<(), Error> {
         buffer.push(0);
     }
 
+    let mut error_blocks = Vec::new();
+
     let mut offset: usize = 0;
     for i in 0..n_blocks {
         reader.read_exact(&mut block)?;
 
         if corr {
-            match correct(&mut block, exponent) {
-                Ok(_) => {}
-                Err(_) => {
-                    println!("Double error in block {}", i);
-                    // TODO
-                }
+            if let Err(_) = correct(&mut block, exponent) {
+                error_blocks.push(i);
             }
         }
 
@@ -71,6 +77,16 @@ pub fn decode(path: &str, corr: bool) -> Result<(), Error> {
     drop(writer);
 
     res_fd.set_len(file_size)?;
+
+    if error_blocks.len() > 0 {
+        return Err(Error::new(
+            ErrorKind::Other,
+            HammingError {
+                message: "Blocks with double error".into(),
+                error_blocks,
+            },
+        ));
+    }
 
     Ok(())
 }

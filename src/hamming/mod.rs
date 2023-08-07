@@ -2,7 +2,10 @@ pub mod decoder;
 pub mod encoder;
 pub mod noise;
 
-use std::io::Result;
+use std::{
+    fs::File,
+    io::{BufReader, Read, Result},
+};
 
 use crate::util::string::Extention;
 
@@ -59,4 +62,79 @@ pub const fn init_masks<'a>() -> [[u8; MAX_BLOCK_SIZE / 8]; MAX_EXPONENT] {
     }
 
     masks
+}
+
+#[test]
+fn no_err_32_block() {
+    generic_test(0, true, None);
+}
+#[test]
+fn no_err_2048_block() {
+    generic_test(1, true, None);
+}
+#[test]
+fn no_err_65536_block() {
+    generic_test(2, true, None);
+}
+#[test]
+fn one_err_32_block() {
+    generic_test(0, true, Some((1.0, 0.0)));
+}
+#[test]
+fn one_err_2048_block() {
+    generic_test(1, true, Some((1.0, 0.0)));
+}
+#[test]
+fn one_err_65536_block() {
+    generic_test(2, true, Some((1.0, 0.0)));
+}
+#[test]
+#[should_panic]
+fn two_err_32_block() {
+    generic_test(0, true, Some((0.0, 1.0)));
+}
+#[test]
+#[should_panic]
+fn two_err_2048_block() {
+    generic_test(1, true, Some((0.0, 1.0)));
+}
+#[test]
+#[should_panic]
+fn two_err_65536_block() {
+    generic_test(2, true, Some((0.0, 1.0)));
+}
+
+fn generic_test(index: usize, correct: bool, errors: Option<(f32, f32)>) {
+    let path = "./test/test.txt";
+    let protected;
+    let deprotected = &path.with_extention(decoder::EXTENTIONS[index]);
+    let mut orig_buf = Vec::new();
+    let mut decomp_buf = Vec::new();
+    if errors.is_some() {
+        protected = path.with_extention(noise::EXTENTIONS[index])
+    } else {
+        protected = path.with_extention(encoder::EXTENTIONS[index])
+    };
+
+    encoder::encode(path, BLOCK_SIZES[index]).expect("Error encoding");
+
+    if let Some((prob_1, prob_2)) = errors {
+        noise::corrupt(
+            &path.with_extention(encoder::EXTENTIONS[index]),
+            prob_1,
+            prob_2,
+        )
+        .expect("Error in corruption");
+    }
+
+    decoder::decode(&protected, correct).expect("Error decoding");
+
+    BufReader::new(File::open(path).expect("Error opening file"))
+        .read_to_end(&mut orig_buf)
+        .expect("Error reading file");
+    BufReader::new(File::open(deprotected).expect("Error opening file"))
+        .read_to_end(&mut decomp_buf)
+        .expect("Error reading file");
+
+    assert_eq!(orig_buf, decomp_buf);
 }
