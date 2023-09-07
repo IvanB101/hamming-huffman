@@ -13,6 +13,7 @@ use crate::util::typed_io::TypedRead;
 pub const VALID_EXTENTIONS: [&str; 1] = ["huf"];
 pub(super) const EXTENTION: &str = "dhu";
 
+/// Node of the decoding tree
 #[derive(Debug)]
 struct Node {
     val: u8,
@@ -20,6 +21,7 @@ struct Node {
     left: Option<Box<Node>>,
 }
 
+/// Auxiliary structure used for decoding
 struct DecodingTree {
     root: Option<Box<Node>>,
 }
@@ -31,6 +33,16 @@ pub struct HuffmanError {
     error_bytes: Vec<u64>,
 }
 
+/// Takes a file, decodes it and writes the result to a new file with the same name
+/// but a different extention
+///
+/// # Arguments
+///
+/// * `path` - A string with the path to the file to decode
+///
+/// # Errors
+/// The function may error when opening a file or reading or writing in one. An error can also
+/// happen when decoding the file contents.
 pub fn decompress(path: &str) -> Result<(), Error> {
     if let None = VALID_EXTENTIONS.iter().position(|&x| path.has_extention(x)) {
         return Err(Error::new(ErrorKind::Other, "Invalid extention"));
@@ -107,6 +119,15 @@ impl Node {
 }
 
 impl DecodingTree {
+    /// Returns a decoding tree, created from the data in a stream.
+    /// With the current implementation the stream should be a file.
+    ///
+    /// # Arguments
+    ///
+    /// * `reader` - from where to read the data
+    ///
+    /// # Errors
+    /// The function may error when doing the reading.
     fn new<R: Read>(mut reader: R) -> Result<DecodingTree, Error> {
         let mut root = Some(Box::new(Node::new(0)));
         let mut buffer = [0 as u8; 2];

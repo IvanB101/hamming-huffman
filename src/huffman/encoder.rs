@@ -12,11 +12,26 @@ use super::{get_char_info, BUFF_SIZE};
 pub const VALID_EXTENTIONS: [&str; 3] = ["txt", "doc", "docx"];
 pub const EXTENTION: &str = "huf";
 
+/// Auxiliary structure to maintain encoding information
 struct Encoder {
+    /// Number of distict byte values present in the file
     distinct: u32,
+    /// Table where each entry has the form (len, code), where:
+    /// * `index` - the index in the vector is the value of the corresponding original byte
+    /// * `code` - is a vector containing the new encoding for the byte value
+    /// * `len` - is the byte length of `code`
     table: Vec<(u8, Vec<u8>)>,
 }
 
+/// Takes a file, encodes it and writes the result to a new file with the same name
+/// but a different extention
+///
+/// # Arguments
+///
+/// * `path` - A string with the path to the file to decode
+///
+/// # Errors
+/// The function may error when opening a file or reading or writing in one.
 pub fn compress(path: &str) -> Result<()> {
     if let None = VALID_EXTENTIONS.iter().position(|&x| path.has_extention(x)) {
         return Err(Error::new(ErrorKind::Other, "Invalid extention"));
@@ -62,6 +77,15 @@ pub fn compress(path: &str) -> Result<()> {
 }
 
 impl Encoder {
+    /// Returns an encoder created from the data in a stream.
+    /// With the current implementation the stream should be a file.
+    ///
+    /// # Arguments
+    ///
+    /// * `reader` - from where to read the data
+    ///
+    /// # Errors
+    /// The function may error when doing the reading.
     fn new<R: Read + Seek>(reader: R) -> Result<Encoder> {
         let mut table = Vec::with_capacity(CARD_ORIG);
 
@@ -140,6 +164,14 @@ impl Encoder {
         Ok(Encoder { table, distinct })
     }
 
+    /// Writes data needed for decoding from the Encoder to a file
+    ///
+    /// # Arguments
+    ///
+    /// * `writer` - to where to write the data.
+    ///
+    /// # Errors
+    /// The function may error when doing the writing.
     fn write<W: Write>(&self, writer: &mut W) -> Result<()> {
         let mut buffer: Vec<u8> = Vec::new();
 
@@ -165,6 +197,12 @@ impl Encoder {
     }
 }
 
+/// Returns a `Vec<u8>` where each bit corresponds to an elemente of the `Vec<bool>` that was
+/// passed
+///
+/// # Arguments
+///
+/// * `vec` - `Vec<boo>` to convert
 fn bool_to_u8_vec(vec: &Vec<bool>) -> Vec<u8> {
     let mut res: Vec<u8> = Vec::new();
 

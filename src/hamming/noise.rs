@@ -16,6 +16,17 @@ use super::BLOCK_SIZES;
 pub const VALID_EXTENTIONS: [&str; 3] = ["HA1", "HA2", "HA3"];
 pub const EXTENTIONS: [&str; 3] = ["HE1", "HE2", "HE3"];
 
+/// Takes an encoded file, corrups it and writes the result to a new file with the same name
+/// but a different extention
+///
+/// # Arguments
+///
+/// * `path` - A string with the path to the file to decode
+/// * `prob1` - Probability of a block having a single error
+/// * `prob2` - Probability of a block having two errors
+///
+/// # Errors
+/// The function may error when opening a file or reading or writing in one.
 pub fn corrupt(path: &str, prob1: f32, prob2: f32) -> Result<(), Error> {
     let extention;
     let block_size;

@@ -17,14 +17,28 @@ const MAX_EXPONENT: usize = 16;
 
 const MASKS: [[u8; MAX_BLOCK_SIZE / 8]; MAX_EXPONENT] = init_masks();
 
+/// Struct for stats related to hamming encoding
 pub struct HammingStats {
+    /// Original size of the file
     orig_size: u64,
+    /// Size of the encoded file
     proc_size: u64,
+    /// Bits used for information
     info_bits: u64,
+    /// Bits used for protection
     proc_bits: u64,
+    /// Bits used for filler
     fill_bits: u64,
 }
 
+/// Gives the `HammingStats` from a encoded file or a normal file if it were to be encoded
+///
+/// # Arguments
+///
+/// * `path` - A string with the path to the file to decode
+///
+/// # Errors
+/// The function may error because of an invalid extention or when opening a file or reading or writing in one.
 pub fn get_stats(path: &str) -> Result<()> {
     let exponent;
     let block_size;
@@ -43,6 +57,7 @@ pub fn get_stats(path: &str) -> Result<()> {
     }
 }
 
+/// Initializes masks used for encoding and decoding
 pub const fn init_masks<'a>() -> [[u8; MAX_BLOCK_SIZE / 8]; MAX_EXPONENT] {
     let mut masks = [[0 as u8; MAX_BLOCK_SIZE / 8]; MAX_EXPONENT];
 
